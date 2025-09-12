@@ -26,7 +26,12 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+// ✅ Get connection string from environment variable (e.g. from Render.com)
+var connectionString = Environment.GetEnvironmentVariable("DefaultConnection");
+
+// ✅ Optional fallback (for local dev)
+// var connectionString = Environment.GetEnvironmentVariable("databaseconnection") 
+//     ?? builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<BTECHDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
@@ -86,7 +91,6 @@ builder.Services.AddScoped<IStaticDataService, StaticDataService>();
 
 builder.Services.AddHttpClient();
 
-
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -106,10 +110,8 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 
 app.UseStaticFiles();
 app.UseAntiforgery();
@@ -120,7 +122,7 @@ app.MapRazorComponents<App>()
 app.MapPost("/", async (IAuthService _Service, [FromForm] string email, [FromForm] string password) =>
 {
     var success = await _Service.LoginAsync(
-                 new BTECH_APP.Models.Auth.LoginModel() { Email = email, Password = password });
+        new BTECH_APP.Models.Auth.LoginModel() { Email = email, Password = password });
 
     if (success)
         return Results.Redirect("/loading");
@@ -135,11 +137,9 @@ app.MapPost("/logout-page", async (IAuthService _Service) =>
     await _Service.LogoutAsync();
 
     return Results.Redirect("/");
-
 })
 .AllowAnonymous()
 .DisableAntiforgery();
-
 
 app.MapPost("/re-login", async (IAuthService _Service, [FromForm] int userId) =>
 {
@@ -152,8 +152,5 @@ app.MapPost("/re-login", async (IAuthService _Service, [FromForm] int userId) =>
 })
 .AllowAnonymous()
 .DisableAntiforgery();
-
-
-
 
 app.Run();
