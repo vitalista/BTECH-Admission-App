@@ -1,0 +1,81 @@
+﻿@page "/"
+@layout Components.Layout.MainLayout;
+@using BTECH_APP.Components.Pages.Auth
+@using BTECH_APP.Models
+@using BTECH_APP.Models.Guest
+@using BTECH_APP.Services.Admin.Interfaces
+@using BTECH_APP.Services.Guest.Interfaces
+@using MudBlazor
+@inject IDialogService DialogService
+@inject IAuthService _Service
+@inject IGuestService _GuestService
+@inject IAcademicYearService _AcademicYearService
+@inject NavigationManager Navigation
+@inject UserContext _userContext
+
+<GuestNavbar IsOpen="@IsOpen" />
+
+<MudPaper Class="academic-banner" Elevation="0" Square="true" Style="padding:10px 0px">
+    <MudText Typo="Typo.h5" Align="Align.Center" Class="mb-1">
+        Academic Year: <strong>@AcademicYear</strong>
+    </MudText>
+
+    <MudText Typo="Typo.subtitle1" Align="Align.Center" Class="mb-1">
+        Semester: <strong>@Semester</strong>
+    </MudText>
+    <MudText Typo="Typo.subtitle2" Align="Align.Center" Color="@StatusColor">
+        Status: <strong>@Status.ToUpper()</strong>
+    </MudText>
+</MudPaper>
+
+<ComponentCarousel/>
+
+<MudContainer MaxWidth="MaxWidth.Large" Style="margin-top:50px; padding-bottom:50px">
+    <MudGrid Spacing="3">
+      <ComponentCoursesOffered Institutes="@Institutes"/>
+     <ComponentRequirements Requirements="@Requirements"/>
+    </MudGrid>
+</MudContainer>
+<ComponentFooter/>
+
+@code {
+    UserAccess userRoles = new UserAccess();
+    private List<InstituteGuestModel> Institutes { get; set; } = new();
+    private RequirementGuestModel Requirements { get; set; } = new();
+
+    public bool IsOpen { get; set; } = false;
+    public string AcademicYear { get; set; } = string.Empty;
+
+    public string Semester { get; set; } = string.Empty;
+
+    public string Status { get; set; } = string.Empty;
+
+    private Color StatusColor => Status.ToLower() switch
+    {
+        "open" => Color.Success,
+        "closed" => Color.Error,
+        _ => Color.Default
+    };
+
+    protected override async void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await _Service.GetCurrentUser();
+
+            Institutes =  await _GuestService.Institutes();
+            Requirements = await _GuestService.Requirements();
+            var academicYear = await _AcademicYearService.IsAcademicYearOpen();
+
+            IsOpen = !academicYear.IsActive;
+            AcademicYear = academicYear.schoolYear;
+            Semester = academicYear.semester;
+            Status = academicYear.IsActive ? "Open" : "Closed";
+
+            if (_userContext.CurrentUser.UserId != 0)
+                Navigation.NavigateTo("/loading", true);
+
+            StateHasChanged();
+        }
+    }
+}

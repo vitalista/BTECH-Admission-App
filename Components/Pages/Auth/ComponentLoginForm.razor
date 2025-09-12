@@ -1,0 +1,75 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using BTECH_APP.Models.Auth
+@using System.Security.Claims
+@using static System.Net.WebRequestMethods
+@inject MudBlazor.ISnackbar Snackbar
+@inject NavigationManager Navigation
+@inject IAuthService _Service
+@inject IJSRuntime JS
+
+<MudDialog Style="width:500px">
+    <DialogContent>
+        <MudForm Model="@model" @ref="form" @bind-IsValid="@isValidated">
+
+            <MudTextField @bind-Value="model.Email"
+                          InputType="InputType.Email"
+                          Label="Email Address"
+                          Variant="Variant.Outlined"
+                          Validation="@(new EmailAddressAttribute() {ErrorMessage = "The email address is invalid"})"
+                          Required="true"
+                          For="@(() => model.Email)" />
+
+            <MudTextField @bind-Value="model.Password"
+                          Label="Password"
+                          Variant="Variant.Outlined"
+                          Required="true"
+                          For="@(() => model.Password)"
+                          InputType="@(_showPassword ? InputType.Text : InputType.Password)"
+                          Adornment="Adornment.End"
+                          AdornmentIcon="@(_showPassword ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                          OnAdornmentClick="@TogglePasswordVisibility" />
+
+            <MudButton Type="Submit" Color="Color.Success" Disabled="@(!isValidated)" Variant="Variant.Filled" Class="mt-3" OnClick="OnValidSubmit">
+                Login
+            </MudButton>
+            <MudButton Class="mt-2" OnClick="Cancel">Cancel</MudButton>
+        </MudForm>
+
+        <form id="loginForm" method="post" action="/" style="display: none;">
+            <input name="email" value="@model.Email" />
+            <input name="password" value="@model.Password" />
+        </form>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+    private MudForm form = new();
+    private LoginModel model = new();
+    private bool isValidated = false;
+    private bool _showPassword = false;
+
+    private void TogglePasswordVisibility() => _showPassword = !_showPassword;
+
+    private async Task OnValidSubmit()
+    {
+        await form.Validate();
+
+        if (form.IsValid)
+        {
+            var succes = await _Service.ValidateAccount(model);
+
+            if(succes)
+                await JS.InvokeVoidAsync("submitLoginForm");
+            else
+                Snackbar.Add("Email or Password is Invalid!, Try Again.", Severity.Error);
+        }
+    }
+
+    private async void Cancel()
+    {
+        await form.ResetAsync();
+        MudDialog.Close();
+    }
+}

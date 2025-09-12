@@ -1,0 +1,144 @@
+﻿@using BTECH_APP.Models
+@inject NavigationManager Navigation
+@inject UserContext _userContext
+@inject IAuthService _Service;
+
+<MudAppBar Elevation="1" Style="background-color:white" Fixed="true">
+    <MudSpacer />
+    <MudText Color="Color.Dark" Style="font-weight:900; text-align:center"> @_userContext.CurrentUser.Name <br/> <span style="color:gray;font-size:15px">@_userContext.CurrentUser.Role.GetDisplayName() </span></MudText>
+</MudAppBar>
+
+<MudDrawer Elevation="1" Variant="DrawerVariant.Persistent" Open="true" Class="pa-2">
+    <MudDrawerHeader Style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px;">
+        <MudImage Src="images/logo.png"
+                  Alt="Logo"
+                  Height="120"
+                  Width="140"
+                  Class="rounded-lg"
+                  Style="background: transparent; box-shadow: none;" />
+
+        <MudText Class="mt-2"
+                 Style="font-weight: 900; text-align:center;color:#546E7A">
+            Dalubhasaang Politekniko ng Lungsod ng Baliwag
+        </MudText>
+    </MudDrawerHeader>
+
+    <MudNavMenu Style="padding-top:20px;">
+
+        @if (_userContext.CurrentUser.Role == Enums.RoleTypes.Admin)
+        {
+            <MudNavLink Href="/dashboard"
+                        Icon="@Icons.Material.Filled.Dashboard"
+                        Class="@GetNavLinkClass("/dashboard")"
+                        @onclick="OnNavLinkClick">
+                Dashboard
+            </MudNavLink>
+        }
+
+            <MudNavLink Href="/applicants"
+                        Icon="@Icons.Material.Filled.FormatListBulleted"
+                        Class="@GetNavLinkClass("/applicants")"
+                        @onclick="OnNavLinkClick">
+                Applicants
+            </MudNavLink>
+
+        @if (_userContext.CurrentUser.Role == Enums.RoleTypes.Admin)
+        {
+            <MudNavLink Href="/institutes"
+                        Icon="@Icons.Material.Filled.AccountBalance"
+                        Class="@GetNavLinkClass("/institutes")"
+                        @onclick="OnNavLinkClick">
+                Institutes
+            </MudNavLink>
+        }
+
+        @if (_userContext.CurrentUser.Role == Enums.RoleTypes.Admin)
+        {
+            <MudNavLink Href="/programs"
+                        Icon="@Icons.Material.Filled.LibraryBooks"
+                        Class="@GetNavLinkClass("/programs")"
+                        @onclick="OnNavLinkClick">
+                Programs
+            </MudNavLink>
+        }
+
+        @if (_userContext.CurrentUser.Role == Enums.RoleTypes.Admin)
+        {
+            <MudNavLink Href="/requirements"
+                        Icon="@Icons.Material.Filled.Checklist"
+                        Class="@GetNavLinkClass("/requirements")"
+                        @onclick="OnNavLinkClick">
+                Requirements
+            </MudNavLink>
+        }
+
+        @if (_userContext.CurrentUser.Role == Enums.RoleTypes.Admin)
+        {
+            <MudNavLink Href="/user-managements"
+                        Icon="@Icons.Material.Filled.SupervisedUserCircle"
+                        Class="@GetNavLinkClass("/user-managements")"
+                        @onclick="OnNavLinkClick">
+                User Managements
+            </MudNavLink>
+        }
+
+
+    </MudNavMenu>
+
+    <MudSpacer />
+
+    <MudNavMenu Style="padding-top:20px">
+        <MudListSubheader>Account Settings</MudListSubheader>
+
+        <MudNavLink Href="/profile"
+                    Icon="@Icons.Material.Filled.AccountCircle"
+                    Class="@GetNavLinkClass("/profile")"
+                    @onclick="OnNavLinkClick">
+            Profile
+        </MudNavLink>
+
+        <MudNavLink Href="/logout"
+                    Icon="@Icons.Material.Filled.Logout"
+                    Class="@GetNavLinkClass("/logout")"
+                    @onclick="OnNavLinkClick">
+            Logout
+        </MudNavLink>
+    </MudNavMenu>
+</MudDrawer>
+
+<style>
+    .force-black-text * {
+        color: black !important;
+        font-weight:900;
+    }
+</style>
+
+@code {
+    private  string GetNavLinkClass(string href)
+    {
+        var isActive = Navigation.Uri.Contains(href, StringComparison.OrdinalIgnoreCase);
+        return isActive ? "force-black-text" : "";
+    }
+
+    private void OnNavLinkClick()
+    {
+        StateHasChanged();
+    }
+
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+
+        StateHasChanged();
+    }
+
+    private void OnLocationChanged(object sender, LocationChangedEventArgs e)
+    {
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+}

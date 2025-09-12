@@ -1,0 +1,56 @@
+﻿@using System.ComponentModel.DataAnnotations
+@inject MudBlazor.ISnackbar Snackbar
+@inject NavigationManager Navigation
+@using BTECH_APP.Models.Admin.Requirement
+@using BTECH_APP.Services.Admin.Interfaces
+@inject IRequirementService _Service
+@using Helpers
+
+
+<MudDialog Style="width:500px">
+    <DialogContent>
+        <div style="display:flex;flex-direction:column;justify-content:center; align-items:center">
+            <MudText>
+                Are you sure you want to delete?
+            </MudText>
+            <MudText>
+                <b>@model.Name</b>
+            </MudText>
+            <MudText>
+                This process cannot be undone.
+            </MudText>
+        </div>
+     </DialogContent>
+     <DialogActions>
+        <MudButton OnClick="()=>CloseModal(false)" Size="Size.Small">Cancel</MudButton>
+        <MudButton Color="Color.Error" Variant="Variant.Filled" Size="Size.Small" OnClick="Delete">Delete</MudButton>
+     </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter]
+    public SaveRequirementModel model { get; set; } = new();
+
+    private async Task Delete()
+    {
+        if (model.RequirementId != 0)
+        {
+            await _Service.Delete(model.RequirementId);
+            Snackbar.Add("Successfully Deleted.", Severity.Success);
+            await CloseModal(true);
+        }
+    }
+
+    private async Task CloseModal(bool success)
+    {
+        if (success)
+            MudDialog.Close(DialogResult.Ok(true));
+        else
+        {
+            await Task.Delay(100);
+            MudDialog.Cancel();
+        }
+    }
+}

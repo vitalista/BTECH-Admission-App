@@ -1,0 +1,193 @@
+﻿@page "/user-managements"
+@using BTECH_APP.Components.Shared
+@layout Components.Layout.AdminLayout
+@using BTECH_APP.Models.Admin.UserManagement
+@using BTECH_APP.Models.Auth
+@using BTECH_APP.Services.Admin
+@using BTECH_APP.Services.Admin.Interfaces
+@using Helpers
+@inject IUserManagementService _Service
+@inject IAuthService _Auth
+@inject IDialogService DialogService
+
+<div style="width:100%">
+<div Style="padding-top:30px;display:flex;justify-content:flex-end;">
+    <MudButton OnClick="OpenComponentCreate"
+               StartIcon="@Icons.Material.Filled.AddCircleOutline"
+               Color="Color.Success"
+               Size="Size.Small"
+               Variant="Variant.Filled"
+               Style="margin-right:5px">
+        Create
+    </MudButton>
+</div>
+
+<ComponentTable TItem="ListUserManagementModel"
+                Items="Users"
+                Title="User Management"
+                EnableSearch="true"
+                FilterFunc="FilterUser">
+
+    <HeaderTemplate>
+        <MudTh><MudTableSortLabel SortBy="new Func<ListUserManagementModel, object>(x => x.Name)">Name</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<ListUserManagementModel, object>(x => x.Email)">Email</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<ListUserManagementModel, object>(x => x.Role)">Role</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<ListUserManagementModel, object>(x => x.Status)">Status</MudTableSortLabel></MudTh>
+        <MudTh Style="width:300px"><MudTableSortLabel SortBy="new Func<ListUserManagementModel, object>(x => x.ModifiedDate ?? DateTime.UtcNow)">Last Updated</MudTableSortLabel></MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderTemplate>
+
+    <RowTemplate Context="user">
+        <MudTd DataLabel="Name">
+            <div>
+                <strong>@user.Name</strong>
+            </div>
+            <div>
+                <small>Birthday: @Helper.FormatDate(@user.BirthDate)</small>
+            </div>
+
+        </MudTd>
+        <MudTd DataLabel="Email">
+            <strong>@user.Email</strong>
+        </MudTd>
+        <MudTd DataLabel="Role">
+            <div>@user.Role</div>
+        </MudTd>
+        <MudTd DataLabel="Status">
+            <div>
+                <strong>@user.Status</strong>
+            </div>
+        </MudTd>
+        <MudTd DataLabel="Modified Date">
+            <div>
+                <strong>@user.ModifiedByName</strong>
+            </div>
+            <div>
+                <small>On: @Helper.FormatDate(@user.ModifiedDate)</small>
+            </div>
+        </MudTd>
+            <MudTd DataLabel="Action">
+                <MudMenu Icon="@Icons.Material.Filled.MoreVert"
+                          Dense
+                          AnchorOrigin="Origin.TopRight"
+                          TransformOrigin="Origin.TopRight">
+                 <MudMenuItem Icon="@Icons.Material.Filled.LockReset" Label="Reset Password" OnClick="()=>OpenComponentResetPassword(user.UserId)" />
+                     <MudMenuItem Icon="@Icons.Material.Filled.Edit" Label="Edit" OnClick="()=>OpenComponentEdit(user.UserId)" />
+                     <MudMenuItem Icon="@Icons.Material.Filled.Delete" Label="Delete" OnClick="()=>OpenComponentDelete(user.UserId)" />
+                 </MudMenu>
+             </MudTd>
+     </RowTemplate>
+
+ </ComponentTable>
+
+ </div>
+
+ @code {
+    private List<ListUserManagementModel> Users = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        Users = await _Service.List();
+        StateHasChanged();
+    }
+
+    private bool FilterUser(ListUserManagementModel user, string search)
+    {
+        return user.Name.Contains(search, StringComparison.OrdinalIgnoreCase)
+            || user.Email.Contains(search, StringComparison.OrdinalIgnoreCase)
+            || user.Role.GetDisplayName().Contains(search, StringComparison.OrdinalIgnoreCase)
+            || user.Status.Contains(search, StringComparison.OrdinalIgnoreCase)
+            || user.ModifiedByName.Contains(search, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task OpenComponentCreate()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+
+        var dialog = await DialogService.ShowAsync<ComponentCreate>("Create User", options);
+        var result = await dialog.Result;
+
+        if (result != null)
+            if (!result.Canceled)
+            {
+                await LoadData();
+            }
+    }
+
+    private async Task OpenComponentEdit(int userId)
+    {
+        var user = await _Service.Find(userId);
+
+        if (user != null)
+        {
+            var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+
+            var prop = new DialogParameters
+            {
+                {nameof(ComponentEdit.model), user}
+            };
+
+            var dialog = await DialogService.ShowAsync<ComponentEdit>("Update User", prop, options);
+            var result = await dialog.Result;
+
+            if (result != null)
+                if (!result.Canceled)
+                {
+                    await LoadData();
+                }
+        }
+    }
+
+    private async Task OpenComponentDelete(int userId)
+    {
+        var user = await _Service.Find(userId);
+
+        if (user != null)
+        {
+            var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+
+            var prop = new DialogParameters
+            {
+                {nameof(ComponentDelete.model), user}
+            };
+
+            var dialog = await DialogService.ShowAsync<ComponentDelete>("Delete User", prop, options);
+            var result = await dialog.Result;
+
+            if (result != null)
+                if (!result.Canceled)
+                {
+                    await LoadData();
+                }
+        }
+    }
+
+    private async Task OpenComponentResetPassword(int userId)
+    {
+        var user = await _Service.Find(userId);
+
+        if (user != null)
+        {
+            var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+
+            var prop = new DialogParameters
+            {
+                {nameof(ComponentResetPassword.model), user}
+            };
+
+            var dialog = await DialogService.ShowAsync<ComponentResetPassword>("Reset Password", prop, options);
+            var result = await dialog.Result;
+
+            if (result != null)
+                if (!result.Canceled)
+                {
+                    await LoadData();
+                }
+        }
+    }
+}

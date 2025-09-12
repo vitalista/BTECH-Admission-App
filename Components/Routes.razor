@@ -1,0 +1,14 @@
+﻿@using BTECH_APP.Components.Pages.Auth
+@using BTECH_APP.Models
+
+<GetCurrentUserLoader/>
+<Router AppAssembly="@typeof(Program).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)" />
+        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <PageNotFound/>
+    </NotFound>
+</Router>
+

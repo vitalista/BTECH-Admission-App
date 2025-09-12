@@ -1,0 +1,102 @@
+﻿@using System.ComponentModel.DataAnnotations
+@inject MudBlazor.ISnackbar Snackbar
+@inject NavigationManager Navigation
+@using BTECH_APP.Models.Admin.Requirement
+@using BTECH_APP.Services.Admin.Interfaces
+@inject IRequirementService _Service
+@using Helpers
+
+
+<MudDialog Style="width:500px">
+    <DialogContent>
+        <MudForm Model="@model" @ref="form" @bind-IsValid="@isValidated">
+
+            <MudTextField @bind-Value="model.Name"
+                          InputType="InputType.Text"
+                          Label="Requirement Name"
+                          Variant="Variant.Outlined"
+                          Required="true"
+                          For="@(() => model.Name)" />
+
+            <MudGrid GutterSize="16px" Class="mb-1">
+                <MudItem xs="12" sm="4">
+                    <MudSelect T="bool" @bind-Value="@model.IsForFreshmen" Label="For Freshmen" Variant="Variant.Outlined" Dense="true" Class="w-full" Margin="Margin.Dense">
+                        <MudSelectItem Value="true">Yes</MudSelectItem>
+                        <MudSelectItem Value="false">No</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12" sm="4">
+                    <MudSelect T="bool" @bind-Value="@model.IsForTransferee" Label="For Transferee" Variant="Variant.Outlined" Dense="true" Class="w-full" Margin="Margin.Dense">
+                        <MudSelectItem Value="true">Yes</MudSelectItem>
+                        <MudSelectItem Value="false">No</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12" sm="4">
+                    <MudSelect T="bool" @bind-Value="@model.IsForAlsGraduate" Label="For ALS Graduate" Variant="Variant.Outlined" Dense="true" Class="w-full" Margin="Margin.Dense">
+                        <MudSelectItem Value="true">Yes</MudSelectItem>
+                        <MudSelectItem Value="false">No</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+
+            <MudSelect @bind-Value="@model.IsRequired" Label="Required" FitContent="true" Variant="Variant.Outlined" ShrinkLabel>
+                <MudSelectItem Value=true>Yes</MudSelectItem>
+                <MudSelectItem Value=false>No</MudSelectItem>
+            </MudSelect>
+
+            <MudSelect @bind-Value="@model.IsActive" Label="Status" FitContent="true" Variant="Variant.Outlined" ShrinkLabel>
+                <MudSelectItem Value=true>Active</MudSelectItem>
+                <MudSelectItem Value=false>Inactive</MudSelectItem>
+            </MudSelect>
+
+            <MudButton Type="Submit" Color="Color.Success" Disabled="@(!isValidated)" Variant="Variant.Filled" Class="mt-3" OnClick="OnValidSubmit">
+                Create
+            </MudButton>
+            <MudButton Class="mt-2" OnClick="() => CloseModal(false)">Cancel</MudButton>
+        </MudForm>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+    private MudForm form = new();
+    private SaveRequirementModel model = new();
+    private bool isValidated = false;
+
+    private async Task OnValidSubmit()
+    {
+        await form.Validate();
+
+        if (form.IsValid)
+        {
+            var (success,errorMessage) = await _Service.Save(model);
+
+            if (success)
+            {
+                Snackbar.Add("Successfully Created.", Severity.Success);
+                await CloseModal(true);
+            }
+            else
+                Snackbar.Add(errorMessage, Severity.Error);
+        }
+        else
+            Snackbar.Add("Failed", Severity.Error);
+
+    }
+
+    private async Task CloseModal(bool success)
+    {
+        if (success)
+            MudDialog.Close(DialogResult.Ok(true));
+        else
+        {
+            await form.ResetAsync();
+
+            await Task.Delay(100);
+            MudDialog.Cancel();
+        }
+    }
+}

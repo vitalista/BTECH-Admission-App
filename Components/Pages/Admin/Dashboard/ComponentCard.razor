@@ -1,0 +1,43 @@
+﻿
+<div style="display:flex;justify-content:center;gap:20px;margin-top:20px">
+    <MudCard Style="height:120px;width:33%; border-radius:20px">
+        <MudCardHeader Style="height:35%">
+            <h4>Freshmen</h4>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudText Style="font-size: 25px">@TotalFreshmen</MudText>
+            <h6>Total Freshmen</h6>
+        </MudCardContent>
+    </MudCard>
+    <MudCard Style="height:120px;width:33%; border-radius:20px">
+        <MudCardHeader Style="height:35%">
+            <CardHeaderContent>
+                <h4>Transferee</h4>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudText Style="font-size: 25px">@TotalTransferee</MudText>
+                <h6>Total Transferee</h6>
+        </MudCardContent>
+    </MudCard>
+    <MudCard Style="height:120px;width:33%; border-radius:20px">
+        <MudCardHeader Style="height:35%">
+            <CardHeaderContent>
+                <h4>Als Graduate</h4>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudText Style="font-size: 25px">@TotalAlsGrad</MudText>
+            <h6>Total Als Graduate</h6>
+        </MudCardContent>
+    </MudCard>
+
+</div>
+@code {
+    [Parameter]
+    public int TotalFreshmen { get; set; }
+    [Parameter]
+    public int TotalTransferee { get; set; }
+    [Parameter]
+    public int TotalAlsGrad { get; set; }
+}

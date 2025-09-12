@@ -1,0 +1,75 @@
+﻿@inherits LayoutComponentBase
+@using BTECH_APP.Components.Pages.Auth
+@using BTECH_APP.Models
+@using Blazored.LocalStorage
+@using MudBlazor
+@using static BTECH_APP.Enums
+@inject NavigationManager Navigation
+@inject IAuthService _Service
+@inject ILocalStorageService _localStorage
+@inject UserContext _userContext
+
+
+<MudThemeProvider />
+<MudSnackbarProvider />
+<MudDialogProvider CloseButton="true"
+                   BackdropClick="false"
+                   Position="DialogPosition.Center"
+                   CloseOnEscapeKey="true" />
+<MudPopoverProvider />
+
+<MudLayout>
+    <AdminNavbar/>
+
+    <MudMainContent Style="display:flex;justify-content:center">
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    UserAccess userAccess = new UserAccess();
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            string currentLink = new Uri(Navigation.Uri).AbsolutePath;
+
+            var isHome = currentLink.Equals("/");
+
+            if (!isHome && _userContext.CurrentUser.UserId == 0)
+            {
+                Navigation.NavigateTo("/logout", true);
+                return;
+            }
+
+            var role = _userContext.CurrentUser.Role;
+
+            if (role == RoleTypes.NotUser ||
+                !(role == RoleTypes.Admin ||
+                  role == RoleTypes.Verifier ||
+                  role == RoleTypes.Scheduler ||
+                  role == RoleTypes.Applicant))
+            {
+                Navigation.NavigateTo("/Not-Authorized", true);
+                return;
+            }
+
+            if (!isHome && _userContext.CurrentUser.UserId != 0)
+            {
+                if (!userAccess.HasAccess(_userContext.CurrentUser.Role, currentLink))
+                {
+                    Navigation.NavigateTo("/Not-Authorized", true);
+                    return;
+                }
+            }
+            else
+            {
+                Navigation.NavigateTo("/loading", true);
+                return;
+            }
+        }
+    }
+
+}
+

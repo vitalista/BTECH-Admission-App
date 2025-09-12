@@ -1,0 +1,22 @@
+﻿<div class="stepper-item">
+    <div class="step-indicator completed">
+        <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" />
+    </div>
+    <div class="step-content">
+        <div class="step-title">@title</div>
+        <div class="step-subtitle">@subTitle</div>
+    </div>
+    @if (!title.Contains("Step 5"))
+    {
+        <div class="step-line completed"></div>
+    }
+    
+</div>
+
+@code {
+    [Parameter]
+    public string title { get; set; } = string.Empty;
+
+    [Parameter]
+    public string subTitle { get; set; } = string.Empty;
+}

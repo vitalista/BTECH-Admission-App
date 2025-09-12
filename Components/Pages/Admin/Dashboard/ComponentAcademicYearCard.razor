@@ -1,0 +1,70 @@
+﻿@using BTECH_APP.Models.Admin.Dashboard
+@using BTECH_APP.Services.Admin.Interfaces
+@using static BTECH_APP.Enums
+@inject IAcademicYearService _Service
+
+
+<MudItem class="d-flex justify-center">
+    <MudCard Outlined="true" Style="width:100%; border-radius:20px; padding:10px; border-bottom: 1px solid #c4c4c4">
+        <MudCardContent class="d-flex justify-center flex-column" Style="padding: 5px">
+            <MudText Typo="Typo.h5" Style="font-weight:900;text-align:center;">Academic Year @academicYearModel.SchoolYear</MudText>
+        </MudCardContent>
+        <MudCardActions Style="display:flex;justify-content:center; padding-right:100px;padding-left:100px">
+
+                <MudSelect Value="academicYearModel.Semester"
+                           ValueChanged="EventCallback.Factory.Create<SemesterTypes>(this,OnSemesterValueChanged)"
+                           Label="Semester"
+                           Variant="Variant.Outlined"
+                           Style="max-width:300px"
+                       ShrinkLabel>
+                <MudSelectItem Value="SemesterTypes.FirstSemester">@SemesterTypes.FirstSemester.GetDisplayName()</MudSelectItem>
+                    <MudSelectItem Value="SemesterTypes.SecondSemester">@SemesterTypes.SecondSemester.GetDisplayName()</MudSelectItem>
+                </MudSelect>
+      
+
+            <MudToggleIconButton
+                            Icon="@Icons.Material.Filled.Lock"
+                            Color="@Color.Error"
+                            ToggledIcon="@Icons.Material.Filled.LockOpen"
+                            ToggledColor="@Color.Success"
+                            Toggled="academicYearModel.IsActive"
+                            ToggledChanged="OnToggleChanged"
+                            title="@(!academicYearModel.IsActive ? "Open" : "Closed")" />
+                <span>Admission is currently <span style="font-weight:900">@(academicYearModel.IsActive ? "Open" : "Closed")</span> </span>
+        </MudCardActions>
+    </MudCard>
+</MudItem>
+
+    @code{
+
+    private SaveAcademicYearModel academicYearModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        academicYearModel = await _Service.GetCurrentAcademic() ?? new SaveAcademicYearModel();
+
+        StateHasChanged();
+    }
+
+    private async Task OnSemesterValueChanged(SemesterTypes newValue)
+    {
+        academicYearModel.Semester = newValue;
+        await _Service.Toggle(academicYearModel);
+        await LoadData();
+    }
+
+    private async Task OnToggleChanged(bool toggled)
+    {
+        academicYearModel.IsActive = toggled;
+
+        await _Service.Toggle(academicYearModel);
+
+        await LoadData();
+    }
+
+}                           

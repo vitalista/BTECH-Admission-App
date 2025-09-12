@@ -1,0 +1,114 @@
+﻿@page "/register"
+@using BTECH_APP.Models.Auth
+@using System.ComponentModel.DataAnnotations
+@inject MudBlazor.ISnackbar Snackbar
+@inject IAuthService _Service
+@inject NavigationManager NavigationManager
+
+<MudDialog DisableBackdropClick="true" DisableEscapeKey="true" Style="width:500px">
+    <DialogContent >
+        <MudForm Model="@model" @ref="form" @bind-IsValid="@success">
+            <MudAlert Severity="Severity.Normal" Style="margin-bottom:10px" Variant="Variant.Outlined">NOTE: After creating your account, you will receive an email with your password and next steps.</MudAlert>
+           
+            <MudTextField @bind-Value="model.FirstName"
+                            InputType="InputType.Text"
+                            Label="First Name"
+                            Variant="Variant.Outlined"
+                            Required="true"
+                          For="@(() => model.FirstName)" />
+
+            <MudTextField @bind-Value="model.MiddleName"
+                            InputType="InputType.Text"
+                            Label="Middle Name"
+                            Variant="Variant.Outlined"
+                            Required="false"
+                          For="@(() => model.MiddleName)" />
+
+            <MudTextField @bind-Value="model.LastName"
+                            InputType="InputType.Text"
+                            Label="Last Name"
+                            Variant="Variant.Outlined"
+                            Required="true"
+                          For="@(() => model.LastName)" />
+
+            <MudTextField @bind-Value="model.Suffix"
+                            InputType="InputType.Text"
+                            Label="Suffix"
+                            Variant="Variant.Outlined"
+                            Required="false"
+                          For="@(() => model.Suffix)" />
+
+            <MudDatePicker Label="Birth Date"
+                            @bind-Date="model.BirthDate"
+                            Placeholder="Select Date"
+                            Editable="true"
+                            Variant="Variant.Outlined" />
+    
+            <MudTextField @bind-Value="model.Email"
+                            InputType="InputType.Email"
+                            Label="Email Address"
+                            Variant="Variant.Outlined"
+                            Validation="@(new EmailAddressAttribute() {ErrorMessage = "The email address is invalid"})"
+                            Required="true"
+                          For="@(() => model.Email)" />
+
+            <MudCheckBox @bind-Value="model.IsAgree" Color="Color.Success" Style="margin-top:5px">
+                I agree to the <span style="font-weight:900">Terms</span> and <span style="font-weight:900">Conditions</span> and Privacy Policy.
+                By registering, I confirm that I have read and understand these policies.</MudCheckBox>
+
+            <MudButton Type="Submit" Color="Color.Success" Disabled="@(!(model.IsAgree && success))" Variant="Variant.Filled" Class="mt-3" OnClick="OnValidSubmit">
+                Submit
+            </MudButton>
+
+            <MudButton Class="mt-2" OnClick="Cancel">Cancel</MudButton>
+
+        </MudForm>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private MudForm form = new();
+
+    private RegisterModel model = new RegisterModel()
+        {
+            BirthDate = DateTime.UtcNow.AddYears(-15)
+        };
+
+    private bool success = false;
+    private string errorMessage = string.Empty;
+
+    private async Task OnValidSubmit()
+    {
+        await form.Validate();
+
+        if (form.IsValid)
+        {
+            var (succes, message, newModel) = await _Service.RegisterAsync(model);
+            model = newModel;
+
+            if (succes)
+            {
+                Snackbar.Add($"{message}", Severity.Success);
+                Cancel();
+                await Task.Delay(3000);
+            }
+            else
+            {
+                success = succes;
+                Snackbar.Add($"{message}", Severity.Error);
+            }
+
+        }
+        else
+            Snackbar.Add("Failed", Severity.Error);
+    }
+
+    private async void Cancel() {
+        await form.ResetAsync();
+        MudDialog.Close();
+    }
+}
+

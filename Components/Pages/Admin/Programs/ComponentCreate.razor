@@ -1,0 +1,109 @@
+﻿@using System.ComponentModel.DataAnnotations
+@inject MudBlazor.ISnackbar Snackbar
+@inject NavigationManager Navigation
+@using BTECH_APP.Models.Admin.Institute
+@using BTECH_APP.Models.Admin.Program
+@using BTECH_APP.Services.Admin.Interfaces
+@inject IProgramService _Service
+@inject IInstituteService _ServiceInstitute
+@using Helpers
+
+
+<MudDialog Style="width:500px">
+    <DialogContent>
+        <MudForm Model="@model" @ref="form" @bind-IsValid="@isValidated">
+
+            <MudTextField @bind-Value="model.Name"
+                          InputType="InputType.Text"
+                          Label="Program Name"
+                          Variant="Variant.Outlined"
+                          Required="true"
+                          For="@(() => model.Name)" />
+
+            <MudTextField @bind-Value="model.Acronym"
+                          InputType="InputType.Text"
+                          Label="Program Acronym"
+                          Variant="Variant.Outlined"
+                          Required="true"
+                          For="@(() => model.Acronym)" />
+
+            <MudSelect @bind-Value="@model.IsActive" Label="Status"  FitContent="true" Variant="Variant.Outlined" ShrinkLabel>
+                    <MudSelectItem Value=true>Active</MudSelectItem>
+                    <MudSelectItem Value=false>Inactive</MudSelectItem>
+            </MudSelect>
+
+            <MudSelect @bind-Value="@model.InstituteId" Label="Institute" FitContent="true" Variant="Variant.Outlined" ShrinkLabel>
+                <MudSelectItem Value="0">Select Institute</MudSelectItem>
+                @foreach (var institute in Institutes)
+                {
+                    <MudSelectItem Value="@institute.InstituteId">@institute.Name</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudButton Type="Submit" Color="Color.Success" Disabled="@(!isValidated && model.InstituteId == 0)" Variant="Variant.Filled" Class="mt-3" OnClick="OnValidSubmit">
+                Create
+            </MudButton>
+            <MudButton Class="mt-2" OnClick="() => CloseModal(false)">Cancel</MudButton>
+        </MudForm>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+    private MudForm form = new();
+    private SaveProgramModel model = new();
+    private bool isValidated = false;
+    private List<LookupInstituteModel> Institutes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Institute();
+    }
+
+    private async Task Institute()
+    {
+        Institutes = await _ServiceInstitute.Lookup();
+
+        if (!Institutes.Any())
+        {
+            Snackbar.Add("Sorry! You cannot create a program because there is no institute. Please create institutes first.", Severity.Error);
+            await CloseModal(false);
+        }
+
+    }
+
+    private async Task OnValidSubmit()
+    {
+        await form.Validate();
+
+        if (form.IsValid)
+        {
+            var (success,errorMessage) = await _Service.Save(model);
+
+            if (success)
+            {
+                Snackbar.Add("Successfully Created.", Severity.Success);
+                await CloseModal(true);
+            }
+            else
+                Snackbar.Add(errorMessage, Severity.Error);
+        }
+        else
+            Snackbar.Add("Failed", Severity.Error);
+
+    }
+
+    private async Task CloseModal(bool success)
+    {
+        if (success)
+            MudDialog.Close(DialogResult.Ok(true));
+        else
+        {
+            await form.ResetAsync();
+
+            await Task.Delay(100);
+            MudDialog.Cancel();
+        }
+    }
+}

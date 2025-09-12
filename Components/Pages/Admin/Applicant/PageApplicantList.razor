@@ -1,0 +1,292 @@
+﻿@page "/applicants"
+@using BTECH_APP.Components.Shared
+@layout Components.Layout.AdminLayout
+@inject IDialogService DialogService
+@inject IApplicantService _Service
+@inject BTECHDbContext _dbContext
+@using BTECH_APP.Models
+@using BTECH_APP.Models.Admin.Applicant
+@using MudBlazor
+@using BTECH_APP.Services.Admin.Interfaces
+@using Helpers
+@using static BTECH_APP.Enums
+@inject IJSRuntime JS
+@inject UserContext _userContext
+
+<div style="width:100%;padding:5px">
+    <div style="padding:30px 20px 0px 20px;display: flex; justify-content: space-between; align-items: center;">
+
+        <!-- Left-aligned button -->
+        <MudButton OnClick="ExportExcel"
+                   StartIcon="@Icons.Material.Filled.Download"
+                   Color="Color.Success"
+                   Size="Size.Small"
+                   Variant="Variant.Filled">
+           Export
+        </MudButton>
+          @if (_userContext.CurrentUser.Role == RoleTypes.Admin)
+        {
+            <MudButton OnClick="OpenComponentSearch"
+            StartIcon="@Icons.Material.Filled.ManageSearch"
+                   Color="Color.Success"
+                   Size="Size.Small"
+                   Variant="Variant.Filled">
+            Search
+            </MudButton>
+        }
+    </div>
+
+    <ComponentTable TItem="ListApplicantModel"
+                    Items="Applicants"
+                    Title="Applicants"
+                    EnableSearch="true"
+                    FilterFunc="FilterElement">
+        <HeaderTemplate>
+            <MudTh><MudTableSortLabel SortBy="new Func<ListApplicantModel, object>(x => x.ApplicantNo??string.Empty)">Applicant No</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<ListApplicantModel, object>(x => x.Name??string.Empty)">Information</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<ListApplicantModel, object>(x => x.Programs)">Programs</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<ListApplicantModel, object>(x => x.StatusName??string.Empty)">Status</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<ListApplicantModel, object>(x => x.ModifiedDate)">Last Updated By</MudTableSortLabel></MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderTemplate>
+
+        <RowTemplate Context="applicant">
+            <MudTd DataLabel="Application Info">
+                <div>
+                    <strong>@applicant.ApplicantNo </strong>
+                </div>
+                <div>
+                    <small>Submitted Date: @Helper.FormatDate(@applicant.SubmittedDate)</small>
+                </div>
+            </MudTd>
+            <MudTd DataLabel="Name">
+                <div>
+                    <strong>@applicant.Name </strong>
+                </div>
+                <div>
+                    <small>Birthday: @Helper.FormatDate(@applicant.Birthday)</small>  <small>Age: @applicant.Age</small>
+                </div>
+                <div>
+                    <small>Type: @applicant.ApplicantTypeName</small>
+                </div>
+            </MudTd>
+            <MudTd DataLabel="Programs">
+                <div>
+                    <small>1st Choice: <span style="font-weight:bold">@applicant.Programs[0]</span></small>
+                </div>
+                <div>
+                    <small>2nd Choice:<span style="font-weight:bold">@applicant.Programs[1]</span></small>
+                </div>
+            </MudTd>
+            <MudTd DataLabel="Status">@applicant.StatusName</MudTd>
+                <MudTd DataLabel="ModifiedDate">
+                    <div>
+                        <strong>@applicant.ModifiedBy </strong>
+                </div>
+                <div>
+                    <small>On: @Helper.FormatDate(@applicant.ModifiedDate)</small>
+                </div>
+            </MudTd>
+            <MudTd DataLabel="Action">
+                <MudMenu Icon="@Icons.Material.Filled.MoreVert"
+                              Dense
+                          AnchorOrigin="Origin.TopRight"
+                          TransformOrigin="Origin.TopRight">
+                     <MudMenuItem Icon="@Icons.Material.Filled.RemoveRedEye" Label="View Application" OnClick="()=>ViewAdmissionForm(applicant.ApplicantId) " />
+
+                     @if(_userContext.CurrentUser.Role == RoleTypes.Verifier)
+                    {
+                        @if (applicant.StatusName == ApplicantStatus.Submitted.GetDisplayName() 
+                            || applicant.StatusName == ApplicantStatus.Resubmitted.GetDisplayName()
+                            || applicant.StatusName == ApplicantStatus.ReturnedToVerifier.GetDisplayName())
+                        {
+                            <MudMenuItem Icon="@Icons.Material.Filled.KeyboardReturn" Label="Return" OnClick="()=>OpenComponentSetStatus(applicant.ApplicantId, ApplicantStatus.Returned)" />
+                            <MudMenuItem Icon="@Icons.Material.Filled.Cancel" Label="Cancel" OnClick="()=>OpenComponentSetStatus(applicant.ApplicantId, ApplicantStatus.Cancelled)" />
+                            <MudMenuItem Icon="@Icons.Material.Filled.CheckCircle" Label="Endorse" OnClick="()=>OpenComponentSetStatus(applicant.ApplicantId, ApplicantStatus.Endorsed)" />
+                        }
+                    }
+
+                    @if (_userContext.CurrentUser.Role == RoleTypes.Admin)
+                    {
+                        @if (applicant.StatusName == ApplicantStatus.Endorsed.GetDisplayName())
+                        {
+                            <MudMenuItem Icon="@Icons.Material.Filled.KeyboardReturn" Label="Return" OnClick="()=>OpenComponentSetStatus(applicant.ApplicantId, ApplicantStatus.ReturnedToVerifier)" />
+                            <MudMenuItem Icon="@Icons.Material.Filled.Schedule" Label="For Schedule" OnClick="()=>OpenComponentSetStatus(applicant.ApplicantId, ApplicantStatus.ForSchedule)" />
+                        }
+                        else @if (applicant.StatusName == ApplicantStatus.Scheduled.GetDisplayName())
+                        {
+                            <MudMenuItem Icon="@Icons.Material.Filled.Reviews" Label="Evaluate" OnClick="()=>OpenComponentEvaluate(applicant.ApplicantId, ApplicantStatus.Admitted)" />
+                        }
+                    }
+
+                    @if (_userContext.CurrentUser.Role == RoleTypes.Scheduler)
+                    {
+                        @if (applicant.StatusName == ApplicantStatus.ForSchedule.GetDisplayName())
+                        {
+                            <MudMenuItem Icon="@Icons.Material.Filled.CalendarToday" Label="Schedule" OnClick="()=>OpenComponentSetStatus(applicant.ApplicantId, ApplicantStatus.Scheduled)" />
+                        }
+                    }
+
+                    <MudMenuItem Icon="@Icons.Material.Filled.History" Label="History" OnClick="()=>OpenComponentActivityLog(applicant.ApplicantId)" />
+                    
+                 </MudMenu>
+             </MudTd>
+         </RowTemplate>
+     </ComponentTable>
+</div>
+
+ @code {
+    private List<ListApplicantModel> Applicants = new();
+
+    private IEnumerable<string> academicYearFilters = Enumerable.Empty<string>();
+    private IEnumerable<SemesterTypes> semesterTypeFilters = new HashSet<SemesterTypes>();
+    private IEnumerable<ApplicantTypes> applicantTypesFilters = new HashSet<ApplicantTypes>();
+    private IEnumerable<ApplicantStatus> applicantStatusFilters = new HashSet<ApplicantStatus>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var currentAcademicYear = _dbContext.AcademicYears
+                                  .OrderByDescending(x => x.AcademicId)
+                                  .First();
+
+        academicYearFilters = new List<string> { currentAcademicYear.SchoolYear };
+        semesterTypeFilters = new List<SemesterTypes> { currentAcademicYear.Semester };
+
+        if(_userContext.CurrentUser.Role == RoleTypes.Verifier)
+        {
+            applicantStatusFilters = new HashSet<ApplicantStatus>() 
+            {
+                ApplicantStatus.Submitted,
+                ApplicantStatus.Resubmitted,
+                ApplicantStatus.ReturnedToVerifier 
+            };
+        }
+        else if(_userContext.CurrentUser.Role == RoleTypes.Scheduler)
+        {
+            applicantStatusFilters = new HashSet<ApplicantStatus>()
+            {
+                ApplicantStatus.ForSchedule,
+            };
+        }
+
+        if (_userContext.CurrentUser.Role == RoleTypes.Admin && !applicantStatusFilters.Any())
+        {
+            applicantStatusFilters = new HashSet<ApplicantStatus>()
+            {
+                ApplicantStatus.Endorsed,
+                ApplicantStatus.Scheduled,
+                ApplicantStatus.Admitted,
+                ApplicantStatus.Recommending,
+                ApplicantStatus.Rejected,
+            };
+        }
+
+        Applicants = await _Service.List(academicYearFilters.ToList(), semesterTypeFilters.ToList(),
+                                        applicantTypesFilters.ToList(), applicantStatusFilters.ToList());
+
+        StateHasChanged();
+    }
+
+    private bool FilterElement(ListApplicantModel applicant, string search)
+    {   
+        return applicant.ApplicantNo.ToString().Contains(search, StringComparison.OrdinalIgnoreCase)
+            || applicant.Name.Contains(search, StringComparison.OrdinalIgnoreCase)
+            || applicant.Gender.Contains(search, StringComparison.OrdinalIgnoreCase)
+            || applicant.ApplicantTypeName.Contains(search, StringComparison.OrdinalIgnoreCase)
+            || applicant.StatusName.Contains(search, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task OpenComponentSearch()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+
+        var dialog = await DialogService.ShowAsync<ComponentSearch>("Advance Search", options);
+        var result = await dialog.Result;
+
+        if (result != null)
+            if (!result.Canceled && result.Data is List<ListApplicantModel> filteredApplicants)
+            {
+                Applicants = filteredApplicants;
+                StateHasChanged();
+            }
+    }
+
+    private async Task ViewAdmissionForm(int applicantId)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true, MaxWidth = MaxWidth.ExtraExtraLarge, FullWidth = true };
+
+        var applicant = await _Service.FindAdmissionForm(applicantId);
+
+        var prop = new DialogParameters
+            {
+                {nameof(ComponentAdmissionForm.Model), applicant}
+            };
+
+        var dialog = await DialogService.ShowAsync<ComponentAdmissionForm>("Application Form", prop, options);
+        var result = await dialog.Result;
+    }
+
+    private async Task OpenComponentSetStatus(int applicantId, ApplicantStatus status)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+
+        var prop = new DialogParameters
+            {
+                {nameof(ComponentSetStatus.applicantId), applicantId},
+                {nameof(ComponentSetStatus.status), status},
+            };
+
+        var dialog = await DialogService.ShowAsync<ComponentSetStatus>($"Application {status.GetDisplayName()}", prop, options);
+        var result = await dialog.Result;
+
+        if (result != null)
+            if (!result.Canceled)
+            {
+                await OnInitializedAsync();
+                StateHasChanged();
+            }
+    }
+
+    private async Task OpenComponentEvaluate(int applicantId, ApplicantStatus status)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+
+        var prop = new DialogParameters
+            {
+                {nameof(ComponentEvaluate.applicantId), applicantId},
+                {nameof(ComponentEvaluate.status), status},
+            };
+
+        var dialog = await DialogService.ShowAsync<ComponentEvaluate>($"Application Evaluation", prop, options);
+        var result = await dialog.Result;
+
+        if (result != null)
+            if (!result.Canceled)
+            {
+                await OnInitializedAsync();
+                StateHasChanged();
+            }
+    }
+
+    private async Task ExportExcel()
+    {
+        var base64 = _Service.ExcelData(Applicants);
+        await JS.InvokeVoidAsync("downLoadExcelFile", "applicant_list.xlsx", base64);
+    }
+
+    private async Task OpenComponentActivityLog(int applicantId)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true};
+
+        var activitlyLogs = await _Service.ActivityLogs(applicantId);
+
+        var prop = new DialogParameters
+            {
+                {nameof(ComponentActivityLog.logs), activitlyLogs}
+            };
+
+        var dialog = await DialogService.ShowAsync<ComponentActivityLog>("History", prop, options);
+        var result = await dialog.Result;
+    }
+
+}

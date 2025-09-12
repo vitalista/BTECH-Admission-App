@@ -1,0 +1,34 @@
+﻿@page "/dashboard"
+@layout Components.Layout.AdminLayout;
+@using BTECH_APP.Models.Admin.Dashboard
+@using BTECH_APP.Services.Admin.Interfaces
+@using MudBlazor
+@inject IDashboardService _Service
+
+<div style="width:100%; padding: 20px; height: 100vh; background: ghostwhite">
+    @if (hasInitialized)
+    {
+        <ComponentAcademicYearCard />
+        <ComponentCard TotalFreshmen="@model.TotalFreshmen" TotalTransferee="@model.TotalTransferee" TotalAlsGrad="@model.TotalAlsGrad" />
+        <div style="display:flex;justify-content:center;margin-top:20px; background: white; border-radius: 20px; padding: 20px; border: 1px solid #c4c4c4">
+            <ComponentApplicantStatusChart Datas="@model.Statistic" />
+        </div>
+    }
+</div>
+
+@code {
+    private bool hasInitialized = false;
+    private StatisticsModel model = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            model = await _Service.Statistic();
+            hasInitialized = true;
+            StateHasChanged();
+        }
+    }
+
+}
+

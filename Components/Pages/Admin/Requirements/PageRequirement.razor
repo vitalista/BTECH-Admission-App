@@ -1,0 +1,170 @@
+﻿@page "/requirements"
+@using BTECH_APP.Components.Shared
+@layout Components.Layout.AdminLayout
+@using BTECH_APP.Models.Admin.Requirement
+@using BTECH_APP.Services.Admin.Interfaces
+@using Helpers
+@inject IDialogService DialogService
+@inject IRequirementService _Service
+
+
+
+<div style="width:100%">
+<div Style="padding-top:30px;display:flex;justify-content:flex-end;">
+    <MudButton OnClick="OpenComponentCreate"
+               StartIcon="@Icons.Material.Filled.AddCircleOutline"
+               Color="Color.Success"
+               Size="Size.Small"
+               Variant="Variant.Filled"
+               Style="margin-right:5px">
+        Create
+    </MudButton>
+</div>
+
+<ComponentTable TItem="ListRequirementModel"
+                Items="Requirements"
+                Title="Requirements"
+                EnableSearch="true"
+                FilterFunc="FilterRequirement">
+
+    <HeaderTemplate>
+        <MudTh><MudTableSortLabel SortBy="new Func<ListRequirementModel, object>(x => x.Name)">Requirement Name</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<ListRequirementModel, object>(x => x.IsForFreshmen)">Freshmen</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<ListRequirementModel, object>(x => x.IsForTransferee)">Transferee</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<ListRequirementModel, object>(x => x.IsForAlsGraduate)">ALS</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<ListRequirementModel, object>(x => x.Status)">Status</MudTableSortLabel></MudTh>
+        <MudTh Style="width:300px"><MudTableSortLabel SortBy="new Func<ListRequirementModel, object>(x => x.ModifiedDate ?? DateTime.UtcNow)">Last Updated</MudTableSortLabel></MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderTemplate>
+
+    <RowTemplate Context="requirement">
+        <MudTd DataLabel="Requirement Name">
+            <strong>@requirement.Name</strong>
+        </MudTd>
+        <MudTd DataLabel="Freshmen">
+            <MudIconButton Icon="@(requirement.IsForFreshmen ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
+                           Color="@(requirement.IsForFreshmen ? MudBlazor.Color.Success : MudBlazor.Color.Error)" />
+        </MudTd>
+        <MudTd DataLabel="Transferee">
+            <MudIconButton Icon="@(requirement.IsForTransferee ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
+                           Color="@(requirement.IsForTransferee ? MudBlazor.Color.Success : MudBlazor.Color.Error)" />
+        </MudTd>
+        <MudTd DataLabel="ALS">
+            <MudIconButton Icon="@(requirement.IsForAlsGraduate ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
+                           Color="@(requirement.IsForAlsGraduate ? MudBlazor.Color.Success : MudBlazor.Color.Error)" />
+        </MudTd>
+
+        <MudTd DataLabel="Status">
+            <div>
+                <strong>@requirement.Status</strong>
+            </div>
+            <div>
+                <small>Required: <b>@(requirement.IsRequired ? "Yes" : "No")</b></small>
+            </div>
+        </MudTd>
+        <MudTd DataLabel="Modified Date">
+            <div>
+                <strong>@requirement.ModifiedByName</strong>
+            </div>
+            <div>
+                <small>On: @Helper.FormatDate(@requirement.ModifiedDate)</small>
+            </div>
+        </MudTd>
+        <MudTd DataLabel="Action">
+            <MudMenu Icon="@Icons.Material.Filled.MoreVert"
+                      Dense
+                      AnchorOrigin="Origin.TopRight"
+                      TransformOrigin="Origin.TopRight">
+                 <MudMenuItem Icon="@Icons.Material.Filled.Edit" Label="Edit" OnClick="()=>OpenComponentEdit(requirement.RequirementId)" />
+                 <MudMenuItem Icon="@Icons.Material.Filled.Delete" Label="Delete" OnClick="()=>OpenComponentDelete(requirement.RequirementId)" />
+             </MudMenu>
+         </MudTd>
+    </RowTemplate>
+
+</ComponentTable>
+</div>
+
+@code {
+    private List<ListRequirementModel> Requirements = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        Requirements = await _Service.List();
+        StateHasChanged();
+    }
+
+    private bool FilterRequirement(ListRequirementModel requirement, string search)
+    {
+        return requirement.Name.Contains(search, StringComparison.OrdinalIgnoreCase)
+            || requirement.Status.Contains(search, StringComparison.OrdinalIgnoreCase)
+            || requirement.ModifiedByName.Contains(search, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task OpenComponentCreate()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+
+        var dialog = await DialogService.ShowAsync<ComponentCreate>("Create Requirement", options);
+        var result = await dialog.Result;
+
+        if (result != null)
+            if (!result.Canceled)
+            {
+                await LoadData();
+            }
+    }
+
+    private async Task OpenComponentEdit(int requirementId)
+    {
+        var requirement = await _Service.Find(requirementId);
+
+        if (requirement != null)
+        {
+            var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+
+            var prop = new DialogParameters
+            {
+                {nameof(ComponentEdit.model), requirement}
+            };
+
+            var dialog = await DialogService.ShowAsync<ComponentEdit>("Update Requirement", prop, options);
+            var result = await dialog.Result;
+
+            if (result != null)
+                if (!result.Canceled)
+                {
+                    await LoadData();
+                }
+        }
+    }
+
+    private async Task OpenComponentDelete(int requirementId)
+    {
+        var requirement = await _Service.Find(requirementId);
+
+        if (requirement != null)
+        {
+            var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+
+            var prop = new DialogParameters
+            {
+                {nameof(ComponentDelete.model), requirement}
+            };
+
+            var dialog = await DialogService.ShowAsync<ComponentDelete>("Delete Requirement", prop, options);
+            var result = await dialog.Result;
+
+            if (result != null)
+                if (!result.Canceled)
+                {
+                    await LoadData();
+                }
+        }
+    }
+   
+}

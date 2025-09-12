@@ -1,0 +1,34 @@
+﻿@page "/404"
+@layout Components.Layout.AdminLayout;
+@using MudBlazor
+@inject NavigationManager Navigation
+
+<MudThemeProvider />
+<MudIcon />
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="d-flex justify-center align-center" Style="height: 100vh;">
+    <MudCard Class="d-flex justify-center align-center" Elevation="0" Style="border: none;">
+        <MudCardHeader Class="d-flex justify-center">
+            <MudIcon Icon="@Icons.Material.Filled.SearchOff" Color="Color.Error" Size="Size.Large" Style="font-size:150px;" />
+        </MudCardHeader>
+
+        <MudCardContent Class="text-center" Style="text-align:center">
+            <MudText Typo="Typo.h4" Color="Color.Error">
+                <strong>404 - Page Not Found</strong>
+            </MudText>
+            <MudText Typo="Typo.body1" Color="Color.Default" GutterBottom="true">
+                Sorry, the page you are looking for could not be found.
+            </MudText>
+            <MudButton Color="Color.Success" Variant="Variant.Outlined" @onclick="NavigateHome" StartIcon="@Icons.Material.Filled.Home">
+                Back to Home
+            </MudButton>
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
+
+@code {
+    private void NavigateHome()
+    {
+        Navigation.NavigateTo("/loading", true);
+    }
+}

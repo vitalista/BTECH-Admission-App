@@ -1,0 +1,63 @@
+﻿@using BTECH_APP.Models.Guest
+<MudItem xs="12" md="4" Style="box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); padding: 25px;">
+    <MudText Typo="Typo.h5" GutterBottom="true" Style="font-weight:900">Requirements</MudText>
+
+    <MudStack Spacing="2" Style="height: 100%; overflow-y: auto;">
+
+        <!-- Freshmen Requirements -->
+        <MudCard Elevation="3" Style="height: 200px; padding:10px; border: 1px solid #ccc; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);">
+            <MudCardHeader Style="padding: 16px 16px 3px 16px">
+                <MudText Typo="Typo.subtitle2">Freshmen Requirements</MudText>
+            </MudCardHeader>
+            <MudCardContent Style="overflow-y: auto; max-height: 150px;">
+                <ul style="padding-left: 20px; margin: 0;">
+
+                    @foreach (var item in Requirements.Freshmen)
+                    {
+                        <li>@item</li>
+                    }
+
+                </ul>
+            </MudCardContent>
+        </MudCard>
+
+        <!-- Transferee Requirements -->
+        <MudCard Elevation="3" Style="height: 200px; padding:10px; border: 1px solid #ccc; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);">
+            <MudCardHeader Style="padding: 16px 16px 3px 16px">
+                <MudText Typo="Typo.subtitle2">Transferee Requirements</MudText>
+            </MudCardHeader>
+            <MudCardContent Style="overflow-y: auto; max-height: 150px;">
+                <ul style="padding-left: 20px; margin: 0;">
+
+                    @foreach (var item in Requirements.Transferee)
+                    {
+                        <li>@item</li>
+                    }
+
+                </ul>
+            </MudCardContent>
+        </MudCard>
+
+        <!-- ALS Graduate Requirements -->
+        <MudCard Elevation="3" Style="height: 200px; padding:10px; border: 1px solid #ccc; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);">
+            <MudCardHeader Style="padding: 16px 16px 3px 16px">
+                <MudText Typo="Typo.subtitle2">ALS Graduate Requirements</MudText>
+            </MudCardHeader>
+            <MudCardContent Style="overflow-y: auto; max-height: 150px;">
+                <ul style="padding-left: 20px; margin: 0;">
+                   
+                    @foreach (var item in Requirements.AlsGraduate)
+                    {
+                        <li>@item</li>
+                    }
+
+                </ul>
+            </MudCardContent>
+        </MudCard>
+
+    </MudStack>
+</MudItem>
+@code{
+    [Parameter]
+    public RequirementGuestModel Requirements { get; set; } = new();
+}

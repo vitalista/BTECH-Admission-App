@@ -1,0 +1,58 @@
+﻿@using BTECH_APP.Models
+@using BTECH_APP.Models.Auth
+@using System.Security.Claims
+@using static BTECH_APP.Enums
+@inject UserContext CurrentUser
+@inject IAuthService _Service
+@inject BTECHDbContext _dbContext
+@inject IHttpContextAccessor _httpContextAccessor
+
+@code {
+
+    protected override void OnInitialized()
+    {
+        CurrentUserModel currentUser = new();
+
+        var user = _httpContextAccessor.HttpContext?.User;
+
+        if (user != null && user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            currentUser.Name = user.FindFirstValue(ClaimTypes.Name);
+
+            var roleString = user.FindFirstValue(ClaimTypes.Role);
+
+            if (Enum.TryParse<RoleTypes>(roleString, out var role))
+                currentUser.Role = role;
+            else
+                currentUser.Role = RoleTypes.NotUser;
+
+            currentUser.ExpiresIn = DateTime.TryParse(user.FindFirstValue("ExpiresIn"), out var exp) ? exp : DateTime.MinValue;
+
+            if (currentUser.ExpiresIn > DateTime.UtcNow)
+            {
+                currentUser.UserId = int.TryParse(user.FindFirstValue("UserId"), out var userId) ? userId : 0;
+                currentUser.PersonId = int.TryParse(user.FindFirstValue("PersonId"), out var personId) ? personId : 0;
+                currentUser.ApplicantId = int.TryParse(user.FindFirstValue("ApplicantId"), out var applicantId) ? applicantId : 0;
+
+
+                var applicant = _dbContext.Applicants
+                                    .Where(x => x.UserId == currentUser.UserId && x.PersonId == currentUser.PersonId)
+                                    .FirstOrDefault();
+
+                if (applicant != null)
+                {
+                    currentUser.ApplicantId = applicant.ApplicantId;
+                    currentUser.ApplicantStatus = applicant.Status;
+                }
+                else
+                {
+                    currentUser.ApplicantId = 0;
+                    currentUser.ApplicantStatus = ApplicantStatus.Draft;
+                }
+            }
+        }
+
+        CurrentUser.CurrentUser = currentUser;
+    }
+
+}

@@ -1,0 +1,51 @@
+﻿@using BTECH_APP.Models
+@inject BTECHDbContext _dbContext;
+@inject UserContext _userContext
+@using Microsoft.EntityFrameworkCore;
+
+
+
+<MudGrid Class="d-flex flex-column justify-content-center mx-auto"
+         Style="height: 100vh; max-width: 1200px; text-align: center; align-items:center; padding-top:100px">
+
+    <MudIcon Icon="@Icons.Material.Filled.Event"
+             Color="Color.Info"
+             Size="Size.Large"
+             Class="mb-4"
+             Style="font-size: 100px;" />
+
+    <MudText Typo="Typo.h4"
+             Class="font-weight-bold mb-2"
+             Color="Color.Primary">
+        Your Exam Schedule is Set!
+    </MudText>
+
+    <MudText Typo="Typo.h6"
+             Color="Color.Dark"
+             Class="mb-3">
+        <MudIcon Icon="@Icons.Material.Filled.Schedule" Class="me-1" />
+        Scheduled Date: <strong>@Helpers.Helper.FormatDate(scheduleDate)</strong>
+    </MudText>
+
+
+    <MudText Typo="Typo.body2" Class="mt-3 text-gray-700">
+        🕒 <b>Please arrive at least 30 minutes before your scheduled appointment.</b>
+    </MudText>
+
+    <MudText Typo="Typo.body2" Class="text-gray-600">
+        ✅ Bring all necessary documents and ID for verification.
+    </MudText>
+
+    </MudGrid>
+
+
+@code {
+
+    private DateTime? scheduleDate { get; set; }
+
+    protected override async Task OnInitializedAsync() => scheduleDate = await _dbContext.Applicants
+            .Where(x => x.ApplicantId == _userContext.CurrentUser.ApplicantId)
+            .Select(x => x.ScheduleDate)
+            .FirstOrDefaultAsync();
+
+}

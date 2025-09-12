@@ -1,0 +1,164 @@
+﻿@using BTECH_APP.Models.Admin.Applicant
+@using static BTECH_APP.Enums
+@inject IDialogService DialogService
+
+<MudDialog Width="2500px">
+    <DialogContent>
+        <MudGrid GutterSize="3">
+
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6">Personal Information</MudText>
+                <MudDivider Class="mb-2" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6"><MudText><b>Applicant No:</b> @Model.ApplicantNo</MudText></MudItem>
+            <MudItem xs="12" sm="6"><MudText><b>Applicant Type:</b> @Model.ApplicantType</MudText></MudItem>
+
+            <MudItem xs="12" sm="12"><MudText><b>Name:</b> @Model.FirstName @Model.MiddleName @Model.LastName @Model.Suffix</MudText></MudItem>
+
+            <MudItem xs="12" sm="4"><MudText><b>Gender:</b> @Model.Gender</MudText></MudItem>
+            <MudItem xs="12" sm="4"><MudText><b>Birth Date:</b> @Model.BirthDate ,  @Model.Age years old</MudText></MudItem>
+            <MudItem xs="12" sm="4"><MudText><b>Mobile No:</b> @Model.MobileNo</MudText></MudItem>
+            <MudItem xs="12" sm="4"><MudText><b>Email:</b> @Model.Email</MudText></MudItem>
+
+            <MudItem xs="12" sm="4"><MudText><b>Civil Status:</b> @Model.CivilStatus</MudText></MudItem>
+                @if (!string.IsNullOrEmpty(Model.NameOfSpouse))
+            {
+                <MudItem xs="12" sm="4"><MudText><b>Name of Spouse:</b> @Model.NameOfSpouse</MudText></MudItem>
+            }
+            <MudItem xs="12" sm="4"><MudText><b>Place of Birth:</b> @Model.PlaceOfBirth</MudText></MudItem>
+
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6" Class="mt-4">Address Information</MudText>
+                <MudDivider Class="mb-2" />
+            </MudItem>
+
+            <MudItem xs="12" sm="12"><MudText><b>Permanent:</b> @Model.PermenentAddress</MudText></MudItem>
+            <MudItem xs="12" sm="12"><MudText><b>Present:</b> @(Model.IsSameAddress ? "Same as Permanent" : Model.PresentAddress)</MudText></MudItem>
+
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6" Class="mt-4">Educational Background</MudText>
+                <MudDivider Class="mb-2" />
+            </MudItem>
+            @for (int i = 0; i < Model.PrevSchools.Count; i++)
+            {
+                var index = i;
+                <MudItem xs="12" sm="12"><MudText><b>@Model.PrevSchools[index].EducationType.GetDisplayName()</b></MudText></MudItem>
+                <MudItem xs="12" sm="4"><MudText><b>Name:</b> @Model.PrevSchools[index].Name</MudText></MudItem>
+                <MudItem xs="12" sm="4"><MudText><b>Address:</b> @Model.PrevSchools[index].Address</MudText></MudItem>
+                <MudItem xs="12" sm="4"><MudText><b>Year Completed:</b> @Model.PrevSchools[index].YearCompleted</MudText></MudItem>
+            }
+
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6" Class="mt-4">Parents</MudText>
+                <MudDivider Class="mb-2" />
+            </MudItem>
+
+            <MudItem xs="12" sm="3"><MudText><b>Mother Name:</b> @Model.MotherName</MudText></MudItem>
+            <MudItem xs="12" sm="3"><MudText><b>Mother Mobile:</b> @Model.MotherMobileNo</MudText></MudItem>
+            <MudItem xs="12" sm="3"><MudText><b>Father Name:</b> @Model.FatherName</MudText></MudItem>
+            <MudItem xs="12" sm="3"><MudText><b>Father Mobile:</b> @Model.FatherMobileNo</MudText></MudItem>
+
+            <MudDivider Class="mb-2" />
+
+         
+            <MudItem xs="12" sm="12">
+                    <MudText>
+                        ARE YOU AN INDIGENOUS PERSON OR A MEMBER OF AN INDIGENOUS TRIBE?
+                        <b> @Model.IsIndigenous </b>
+                </MudText>
+            </MudItem>
+
+            <MudItem xs="12" sm="12">
+                <MudText>
+                    ARE YOU A SOLO PARENT OR A CHILD OF A SOLO PARENT?
+                    <b> @Model.IsSoloParent </b>
+                </MudText>
+            </MudItem>
+
+            <MudItem xs="12" sm="12">
+                <MudText>
+                    ARE YOU DIFFERENTLY ABLED?
+                    <b> @Model.IsWithDisabilty </b>
+                </MudText>
+            </MudItem>
+
+            <MudItem xs="12" sm="12">
+                <MudText>
+                    ARE YOU A BENEFICIARY OF THE 4PS PROGRAM OF THE GOVERNMENT?
+                    <b> @Model.Is4psMember </b>
+                </MudText>
+            </MudItem>
+
+
+            <MudDivider Class="mb-2" />
+
+            <MudItem xs="12" sm="12"><MudText><b>Degree Program(s) Applied For:</b></MudText></MudItem>
+            <MudItem xs="12" sm="6"><MudText> <b>1st Choice:</b> @Model.FirstChoice </MudText></MudItem>
+            <MudItem xs="12" sm="6"><MudText> <b>2nd Choice:</b> @Model.SecondChoice </MudText></MudItem>
+
+
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6" Class="mt-4">Requirements</MudText>
+                <MudDivider Class="mb-2" />
+            </MudItem>
+
+             <MudItem xs="12" class="d-flex justify-center">
+                    <MudTable Items="Model.Requirements" Hover="true" Bordered="true" Striped="true" Style="width:800px">
+                        <HeaderContent>
+                            <MudTh>Requirement</MudTh>
+                            <MudTh>Uploaded File</MudTh>
+                            <MudTh Style="width:100px">Action</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>
+                                <div>
+                                    <strong>@context.Name</strong>
+                            </div>
+                            <div>
+                                <small>Required: <b>@(context.IsRequired ? "Yes" : "No")</b></small>
+                            </div>
+                        </MudTd>
+
+                        <MudTd>
+                            @(string.IsNullOrEmpty(context.FileName) ? "Not Uploaded" : context.FileName)
+                        </MudTd>
+
+                        <MudTd>
+                            <MudButton StartIcon="@Icons.Material.Filled.Visibility"
+                                       Color="Color.Tertiary"
+                                       Variant="Variant.Filled"
+                                       Size="Size.Small"
+                                       Disabled="@(string.IsNullOrEmpty(context.FilePath))"
+                                       OnClick="() => ViewUploadedFile(context.FilePath ?? string.Empty,context.FileType)">
+                                View
+                            </MudButton>
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudItem>
+
+        </MudGrid>
+    </DialogContent>
+
+    <DialogActions>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public AdmisisionFormApplicantModel Model { get; set; } = default!;
+
+    private async Task ViewUploadedFile(string filePath, FileTypes fileType )
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true, MaxWidth = MaxWidth.ExtraExtraLarge, FullWidth = true };
+
+        var prop = new DialogParameters
+            {
+                {nameof(ComponentFileView.FilePath), filePath},
+                {nameof(ComponentFileView.FileType), fileType},
+            };
+
+        var dialog = await DialogService.ShowAsync<ComponentFileView>("Requirement Uploaded", prop, options);
+        var result = await dialog.Result;
+    }
+}

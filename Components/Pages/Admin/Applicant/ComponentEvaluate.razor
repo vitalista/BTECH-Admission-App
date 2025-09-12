@@ -1,0 +1,173 @@
+﻿@using BTECH_APP.Models.Admin.Program
+@using BTECH_APP.Services.Admin.Interfaces
+@using static BTECH_APP.Enums
+@inject IApplicantService _Service
+@inject ISnackbar Snackbar
+
+
+<MudDialog Style="width:500px">
+    <DialogContent>
+        <div style="display:flex;flex-direction:column;justify-content:center; align-items:center">
+
+            <MudTextField @bind-Value="examScore"
+                          InputType="InputType.Number"
+                          Label="Exam Score"
+                          Variant="Variant.Outlined"
+                          Required="true"
+                          FullWidth="false"
+                          For="@(() => examScore)" />
+
+            @if (status == ApplicantStatus.Recommending)
+            {
+                <MudSelect T="int"
+                           @bind-SelectedValues="recommendedProgramIds"
+                           Label="Select Programs"
+                           Variant="Variant.Outlined"
+                           FitContent="true"
+                           Dense="true"
+                           MultiSelection="true"
+                           ShrinkLabel="true"
+                           FullWidth="true"
+                           ToStringFunc="GetProgramName">
+                    @foreach (var item in programs)
+                    {
+                        <MudSelectItem Value="@item.ProgramId">@item.Name</MudSelectItem>
+                    }
+                </MudSelect>
+
+                <div style="width:100%;display:flex;justify-content:start" >
+                    
+                </div>
+
+            }else
+            {
+                <MudText Typo="Typo.h6" Class="mb-4">Degree Program(s) Applied For</MudText>
+
+                <MudGrid GutterSize="1" Class="mb-4" Style="padding-left:10px">
+                    <MudRadioGroup T="int"
+                                   Value="@selectedProgramId"
+                                   ValueChanged="EventCallback.Factory.Create<int>(this, value => selectedProgramId = value)"
+                                   Style="flex-shrink: 0;">
+
+                        @if (selectedProgram.Count > 0)
+                        {
+                            <MudItem xs="12">
+                                <MudText Class="mb-1">First Choice</MudText>
+                                <MudRadio T="int"
+                                          Value="@selectedProgram[0].ProgramId"
+                                          Label="@selectedProgram[0].Name" />
+                            </MudItem>
+                        }
+
+                        @if (selectedProgram.Count > 1)
+                        {
+                            <MudItem xs="12">
+                                <MudText Class="mb-1">Second Choice</MudText>
+                                <MudRadio T="int"
+                                          Value="@selectedProgram[1].ProgramId"
+                                          Label="@selectedProgram[1].Name" />
+                            </MudItem>
+                        }
+                    </MudRadioGroup>
+                </MudGrid>
+            }
+
+            <MudTextField T="string"
+                          @bind-Value="remarks"
+                          Label="Enter your remarks"
+                          Placeholder="Type here..."
+                          Lines="5"
+                          FullWidth="true"
+                          Variant="Variant.Filled"
+                          Margin="Margin.Dense"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Edit"
+                          Style="resize: vertical;" />
+
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="()=>CloseModal(false)" Size="Size.Small">Cancel</MudButton>
+        <MudButton Color="Color.Success" Variant="Variant.Filled" Size="Size.Small" Style="@(status != ApplicantStatus.Recommending ? "":"display:none")" Disabled="@(examScore == 0 || selectedProgramId == 0)" OnClick="Confirm">Admit</MudButton>
+        <MudButton Color="Color.Success"
+                   Variant="Variant.Filled"
+                   Size="Size.Small"
+                   Style="@(status != ApplicantStatus.Recommending ? "" : "display:none")"
+                   Disabled="@(examScore == 0 || selectedProgramId != 0)"
+                   OnClick="async () =>
+           {
+               status = ApplicantStatus.Rejected;
+               await Confirm();
+           }">
+            Reject
+        </MudButton>
+
+        <MudButton Color="Color.Success" Variant="Variant.Filled" Size="Size.Small" Style="@(status != ApplicantStatus.Recommending ? "":"display:none")" Disabled="@(examScore == 0 || selectedProgramId != 0)" OnClick="()=>status = ApplicantStatus.Recommending">Recommend</MudButton>
+
+        <MudButton Color="Color.Inherit" Variant="Variant.Filled" Size="Size.Small" Style="@(status == ApplicantStatus.Recommending ? "":"display:none")" OnClick="()=>status = ApplicantStatus.Admitted">Back</MudButton>
+        <MudButton Color="Color.Success" Variant="Variant.Filled" Size="Size.Small" Style="@(status == ApplicantStatus.Recommending ? "":"display:none")" Disabled="@(examScore == 0 || !recommendedProgramIds.Any())" OnClick="Confirm" >Recommend</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public int applicantId { get; set; }
+    [Parameter]
+    public ApplicantStatus status { get; set; }
+
+    private DateTime? ScheduleDate = DateTime.UtcNow;
+
+    private List<LookupProgramModel> programs { get; set; } = new();
+    private List<LookupProgramModel> selectedProgram { get; set; } = new();
+
+    private IEnumerable<int> recommendedProgramIds = Enumerable.Empty<int>();
+
+    private string SuccessMessage = string.Empty;
+    private string? remarks { get; set; }
+    private int examScore{ get; set; }
+    private int selectedProgramId { get; set; } = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        programs = await _Service.LookupProgram(applicantId,false);
+        selectedProgram = await _Service.LookupProgram(applicantId, true);
+    }
+
+    protected override void OnParametersSet()
+    {
+        SuccessMessage = Helpers.Helper.StatusSuccessMessage(status);
+    }
+
+    private string GetProgramName(int programId)
+    {
+        return programs.FirstOrDefault(p => p.ProgramId == programId)?.Name ?? $"Program {programId}";
+    }
+
+    private async Task Confirm()
+    {
+        if (applicantId != 0)
+        {
+            bool success = await _Service.Evaluate(applicantId, remarks, status, selectedProgramId, recommendedProgramIds.ToList());
+
+            if (success)
+            {
+                Snackbar.Add($"{Helpers.Helper.StatusSuccessMessage(status)}", Severity.Success);
+                await CloseModal(true);
+            }
+        }
+    }
+
+    private async Task CloseModal(bool success)
+    {
+        if (success)
+            MudDialog.Close(DialogResult.Ok(true));
+        else
+        {
+            await Task.Delay(100);
+            MudDialog.Cancel();
+        }
+    }
+}

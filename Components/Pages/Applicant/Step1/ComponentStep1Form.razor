@@ -1,0 +1,741 @@
+﻿@using BTECH_APP.Components.Pages.Admin.Applicant
+@using BTECH_APP.Models
+@using BTECH_APP.Models.Admin.Program
+@using BTECH_APP.Models.Applicant
+@using BTECH_APP.Models.StaticData
+@using BTECH_APP.Services.Admin.Interfaces
+@using BTECH_APP.Services.Applicant.Interfaces
+@using MudBlazor
+@inject IStep1ApplicantService _Service
+@inject IProgramService _ServiceProgram
+@inject MudBlazor.ISnackbar Snackbar
+@inject UserContext _userContext
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
+@using Helpers
+@using static BTECH_APP.Enums
+
+<MudGrid Class="mx-auto my-4 p-6" Elevation="0" Style="max-width: 1200px;">
+    <MudForm Model="@model" @ref="form" @bind-IsValid="@isValidated">
+
+        <MudText Typo="Typo.h6">Application Form</MudText>
+        <MudDivider Class="mb-2" />
+        <MudGrid GutterSize="2" Class="mb-2">
+
+            <MudItem xs="12" sm="3">
+                <MudSelect Value="model.ApplicantType"
+                           Label="Applicant Type"
+                           ValueChanged="EventCallback.Factory.Create<ApplicantTypes>(this,value => OnSelectChange(value))"
+                           Variant="Variant.Outlined"
+                           Required=true
+                           ShrinkLabel>
+                    <MudSelectItem Value=ApplicantTypes.NotSet Disabled=true>Select Type</MudSelectItem>
+                    <MudSelectItem Value=ApplicantTypes.Freshmen>@ApplicantTypes.Freshmen.GetDisplayName()</MudSelectItem>
+                    <MudSelectItem Value=ApplicantTypes.Transferee>@ApplicantTypes.Transferee.GetDisplayName()</MudSelectItem>
+                    <MudSelectItem Value=ApplicantTypes.AlsGraduate>@ApplicantTypes.AlsGraduate.GetDisplayName()</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+
+            <MudItem xs="12" sm="2">
+                <MudSelect Value="model.Gender"
+                            Label="Gender"
+                               ValueChanged="EventCallback.Factory.Create<GenderTypes>(this,value => OnSelectChange(value))"
+                            Variant="Variant.Outlined"
+                            Required=true
+                        ShrinkLabel>
+                    <MudSelectItem Value="@GenderTypes.NotSet" Disabled=true>Select Gender</MudSelectItem>
+                    <MudSelectItem Value="@GenderTypes.Male">@GenderTypes.Male.GetDisplayName()</MudSelectItem>
+                    <MudSelectItem Value="@GenderTypes.Female">@GenderTypes.Female.GetDisplayName()</MudSelectItem>
+                </MudSelect>
+             </MudItem>
+
+             <MudItem xs="12" sm="2">
+                    <MudTextField @bind-Value="model.MobileNo"
+                               Label="Mobile No."
+                               Required=true
+                               OnBlur="OnSaveDraft"
+                               Variant="Variant.Outlined"
+                               For="@(() => model.MobileNo)" />
+            </MudItem>
+
+             <MudItem xs="12" sm="4">
+                    <MudTextField @bind-Value="model.PlaceOfBirth"
+                               Label="Birth Place"
+                               Required=true
+                               OnBlur="OnSaveDraft"
+                               Variant="Variant.Outlined"
+                               For="@(() => model.PlaceOfBirth)" />
+             </MudItem>
+         </MudGrid>
+
+         <MudText Typo="Typo.h6">Address</MudText>
+         <MudDivider Class="mb-2" />
+         <MudText>Permanent</MudText>
+         <MudGrid GutterSize="0" Class="mb-2">
+
+             <MudItem xs="12" sm="3">
+                    <MudSelect Value="address[0].ProvinceId"
+                               Label="Province"
+                               Variant="Variant.Outlined"
+                               Required=true
+                               ValueChanged="EventCallback.Factory.Create<int>(this,value => OnAddressChange(true,value,1))"
+                               For="@(()=>address[0].ProvinceId)"
+                           ShrinkLabel>
+                    <MudSelectItem Value=0>Select Province</MudSelectItem>
+                    @foreach (var x in PermanentProvinces)
+                    {
+                        <MudSelectItem Value=x.ProvinceId>@x.Name</MudSelectItem>
+                    }
+                    </MudSelect>
+             </MudItem>
+
+             <MudItem xs="12" sm="3">
+                <MudSelect Value="address[0].MunicipalityId"
+                               Label="Muncipality/City"
+                               Variant="Variant.Outlined"
+                               Required=true
+                           ValueChanged="EventCallback.Factory.Create<int>(this,value => OnAddressChange(true,value,2))"
+                               Disabled=@(address[0].ProvinceId == 0)
+                           For="@(()=>address[0].MunicipalityId)"
+                           ShrinkLabel>
+                    <MudSelectItem Value=0>Select Municipality/City</MudSelectItem>
+                    @foreach (var x in PermanentMunicipalities)
+                    {
+                        <MudSelectItem Value=x.MunicipalityId>@x.Name</MudSelectItem>
+                    }
+                </MudSelect>
+             </MudItem>
+
+             <MudItem xs="12" sm="3">
+                <MudSelect Value="address[0].BarangayId"
+                           Label="Barangay"
+                           Variant="Variant.Outlined"
+                           Required=true
+                           For="@(()=>address[0].BarangayId)"
+                           Disabled=@(address[0].MunicipalityId == 0)
+                           ValueChanged="EventCallback.Factory.Create<int>(this,value => OnAddressChange(true,value,3))"
+                           ShrinkLabel>
+                    <MudSelectItem Value=0>Select Barangay</MudSelectItem>
+                    @foreach (var x in PermanentBarangays)
+                    {
+                        <MudSelectItem Value=x.BarangayId>@x.Name</MudSelectItem>
+                    }
+                </MudSelect>
+             </MudItem>
+
+             <MudItem xs="12" sm="2">
+                 <MudTextField @bind-Value="address[0].Street"
+                               Label="House No. / Street"
+                               Variant="Variant.Outlined"
+                               Required=true
+                               For="@(() => address[0].Street)" />
+             </MudItem>
+
+             <MudItem xs="12" sm="1">
+                 <MudTextField @bind-Value="address[0].ZipCode"
+                               Label="ZIP Code"
+                               Variant="Variant.Outlined"
+                               Required
+                               For="@(() => address[0].ZipCode)" />
+             </MudItem>
+         </MudGrid>
+
+         <div style="display: flex; align-items: center;">
+             <MudText Class="me-1">Present</MudText>
+
+             <MudCheckBox Value="model.IsSameAddress"
+                          Color="Color.Dark"
+                          Size="Size.Medium"
+                          ValueChanged="EventCallback.Factory.Create<bool>(this, value => OnSameAddress(value))"
+                          Label="Same as Permanent" />
+         </div>
+
+         <MudGrid GutterSize="0" Class="mb-2" Style="@((model.IsSameAddress ? "display:none;" : ""))">
+
+             <MudItem xs="12" sm="3">
+                 <MudSelect Value="address[1].ProvinceId"
+                            Label="Province"
+                            Variant="Variant.Outlined"
+                            Required=@(!model.IsSameAddress)
+                            For="@(()=>address[1].ProvinceId)"
+                            ValueChanged="EventCallback.Factory.Create<int>(this,value => OnAddressChange(false,value,1))"
+                           ShrinkLabel>
+
+                    <MudSelectItem Value=0>Select Province</MudSelectItem>
+                    @foreach (var x in CurrentProvinces)
+                    {
+                        <MudSelectItem Value=x.ProvinceId>@x.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+
+            <MudItem xs="12" sm="3">
+                <MudSelect Value="address[1].MunicipalityId"
+                           Label="Muncipality/City"
+                           Variant="Variant.Outlined"
+                           Required=@(!model.IsSameAddress)
+                           Disabled=@(address[1].ProvinceId == 0)
+                           For="@(()=>address[1].MunicipalityId)"
+                           ValueChanged="EventCallback.Factory.Create<int>(this,value => OnAddressChange(false,value,2))"
+                           ShrinkLabel>
+                    <MudSelectItem Value=0>Select Municipality/City</MudSelectItem>
+                    @foreach (var x in CurrentMunicipalities)
+                    {
+                        <MudSelectItem Value=x.MunicipalityId>@x.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+
+            <MudItem xs="12" sm="3">
+                <MudSelect Value="address[1].BarangayId"
+                           Label="Barangay"
+                           Variant="Variant.Outlined"
+                           Required=@(!model.IsSameAddress)
+                           Disabled=@(address[1].MunicipalityId == 0)
+                           For="@(()=>address[1].BarangayId)"
+                           ValueChanged="EventCallback.Factory.Create<int>(this,value => OnAddressChange(false,value,3))"
+                           ShrinkLabel>
+                    <MudSelectItem Value=0>Select Barangay</MudSelectItem>
+                    @foreach (var x in CurrentBarangays)
+                    {
+                        <MudSelectItem Value=x.BarangayId>@x.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+
+             <MudItem xs="12" sm="2">
+                 <MudTextField @bind-Value="address[1].Street"
+                               Label="House No. / Street"
+                               Variant="Variant.Outlined"
+                                Required=@(!model.IsSameAddress)
+                               For="@(() => address[1].Street)" />
+             </MudItem>
+
+             <MudItem xs="12" sm="1">
+                 <MudTextField @bind-Value="address[1].ZipCode"
+                               Label="ZIP Code"
+                               Variant="Variant.Outlined"
+                              Required=@(!model.IsSameAddress)
+                               For="@(() => address[1].ZipCode)" />
+             </MudItem>
+         </MudGrid>
+
+         <MudText Typo="Typo.h6">Status</MudText>
+         <MudDivider Class="mb-2" />
+         <MudGrid GutterSize="2" Class="mb-2">
+             <MudItem xs="12" sm="2">
+                 <MudSelect Value="model.CivilStatus"
+                            Label="Civil Status"
+                            ValueChanged="EventCallback.Factory.Create<CivilStatus>(this,value => OnSelectChange(value))"
+                            Variant="Variant.Outlined"
+                            Required=true
+                           ShrinkLabel>
+                    <MudSelectItem Value="@CivilStatus.NotSet" Disabled=true>Select Gender</MudSelectItem>
+                    <MudSelectItem Value="@CivilStatus.Single">@CivilStatus.Single.GetDisplayName()</MudSelectItem>
+                    <MudSelectItem Value="@CivilStatus.Married">@CivilStatus.Married.GetDisplayName()</MudSelectItem>
+                    </MudSelect>
+             </MudItem>
+                <MudItem xs="12" sm="4" Style="@((model.CivilStatus == CivilStatus.Single ? "display:none;" : ""))">
+                 <MudTextField @bind-Value="model.NameOfSpouse"
+                               Label="Name of Spouse"
+                               Variant="Variant.Outlined"
+                               OnBlur="OnSaveDraft"
+                               For="@(() => model.NameOfSpouse)" />
+             </MudItem>
+           
+         </MudGrid>
+
+         <MudText Typo="Typo.h6">Education</MudText>
+         <MudDivider Class="mb-2" />
+         @for (int i = 0; i < preSchools.Count; i++)
+        {
+            var index = i;
+            <MudText>@preSchools[index].EducationType.GetDisplayName()</MudText>
+            <MudGrid GutterSize="2" Class="mb-2">
+                <MudItem xs="12" sm="4">
+                    <MudTextField @bind-Value="preSchools[index].Name"
+                                  Label="Name of School"
+                                  Variant="Variant.Outlined"
+                                  OnBlur="OnSaveDraft"
+                                  Required=false
+                                  For="@(() => preSchools[index].Name)" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="preSchools[index].Address"
+                                  Label="School Address"
+                                  Variant="Variant.Outlined"
+                                  Required=false
+                                  OnBlur="OnSaveDraft"
+                                  For="@(() => preSchools[index].Address)" />
+                </MudItem>
+
+                <MudItem xs="12" sm="2">
+                    <MudTextField @bind-Value="preSchools[index].YearCompleted"
+                                  Label="Year Completed"
+                                  Variant="Variant.Outlined"
+                                  Required=false
+                                  OnBlur="OnSaveDraft"
+                                  For="@(() => preSchools[index].YearCompleted)" />
+                </MudItem>
+            </MudGrid>
+        }
+
+         <MudText Typo="Typo.h6">Parents</MudText>
+         <MudDivider Class="mb-2" />
+         <MudGrid GutterSize="2" Class="mb-2">
+             <MudItem xs="12" sm="4">
+                 <MudTextField @bind-Value="model.MotherName"
+                               Label="Mother's Name"
+                               Variant="Variant.Outlined"
+                               Required=true
+                               OnBlur="OnSaveDraft"
+                               For="@(() => model.MotherName)" />
+             </MudItem>
+
+             <MudItem xs="12" sm="2">
+                 <MudTextField @bind-Value="model.MotherMobileNo"
+                               Label="Mother's Mobile"
+                               Variant="Variant.Outlined"
+                               Required=true
+                               OnBlur="OnSaveDraft"
+                               For="@(() => model.MotherMobileNo)" />
+             </MudItem>
+
+             <MudItem xs="12" sm="4">
+                 <MudTextField @bind-Value="model.FatherName"
+                               Label="Father's Name"
+                               Variant="Variant.Outlined"
+                               Required=true
+                               OnBlur="OnSaveDraft"
+                               For="@(() => model.FatherName)" />
+             </MudItem>
+
+             <MudItem xs="12" sm="2">
+                 <MudTextField @bind-Value="model.FatherMobileNo"
+                               Label="Father's Mobile"
+                               Variant="Variant.Outlined"
+                               Required=true
+                               OnBlur="OnSaveDraft"
+                               For="@(() => model.FatherMobileNo)" />
+             </MudItem>
+         </MudGrid>
+
+         <MudText Typo="Typo.h6">Questions</MudText>
+         <MudDivider Class="mb-3" />
+        <MudGrid GutterSize="2">
+            <MudItem xs="8">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+                    <MudText Typo="Typo.body1" Style="white-space: nowrap;">
+                        ARE YOU AN INDIGENOUS PERSON OR A MEMBER OF AN INDIGENOUS TRIBE?
+                    </MudText>
+                    <MudRadioGroup Value="model.IsIndigenous" Row="true"
+                                   ValueChanged="EventCallback.Factory.Create<bool>(this, value => OnQuestions(value, 1))"
+                                    Style="flex-shrink: 0;">
+                        <MudRadio Value=true Label="YES" />
+                        <MudRadio Value=false Label="NO" />
+                    </MudRadioGroup>
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+                    <MudText Typo="Typo.body1" Style="white-space: nowrap;">
+                        ARE YOU A SOLO PARENT OR A CHILD OF A SOLO PARENT?
+                    </MudText>
+                    <MudRadioGroup Value="model.IsSoloParent" Row="true"
+                                   ValueChanged="EventCallback.Factory.Create<bool>(this, value => OnQuestions(value, 2))"
+                                   Style="flex-shrink: 0;">
+                        <MudRadio Value=true Label="YES" />
+                        <MudRadio Value=false Label="NO" />
+                    </MudRadioGroup>
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+                    <MudText Typo="Typo.body1" Style="white-space: nowrap;">
+                        ARE YOU DIFFERENTLY ABLED?
+                    </MudText>
+                    <MudRadioGroup Value="model.IsWithDisabilty" Row="true"
+                                   ValueChanged="EventCallback.Factory.Create<bool>(this, value => OnQuestions(value, 3))"
+                                   Style="flex-shrink: 0;">
+                        <MudRadio Value=true Label="YES" />
+                        <MudRadio Value=false Label="NO" />
+                    </MudRadioGroup>
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+                    <MudText Typo="Typo.body1" Style="white-space: nowrap;">
+                        ARE YOU A BENEFICIARY OF THE 4PS PROGRAM OF THE GOVERNMENT?
+                    </MudText>
+                    <MudRadioGroup Value="model.Is4psMember" Row="true"
+                                   ValueChanged="EventCallback.Factory.Create<bool>(this, value => OnQuestions(value, 4))"
+                                   Style="flex-shrink: 0;">
+                        <MudRadio Value=true Label="YES" />
+                        <MudRadio Value=false Label="NO" />
+                    </MudRadioGroup>
+                </div>
+            </MudItem>
+        </MudGrid>
+
+         <MudText Typo="Typo.h6">Degree Program(s) Applied For</MudText>
+         <MudDivider Class="mb-2" />
+         <MudGrid GutterSize="2" Class="mb-2">
+             <MudItem xs="12" sm="6">
+
+                 <MudSelect Value="selectedProgs[0].ProgramId"
+                            Label="First Choice"
+                            ValueChanged="EventCallback.Factory.Create<int>(this,value => OnSelectedProgram(value,SelectedProgramTypes.First))"
+                            Variant="Variant.Outlined"
+                            Required=true
+                           ShrinkLabel>
+                    <MudSelectItem Value="0" Disabled=true>Select Program</MudSelectItem>
+                    @foreach(var x in FirstSelectedPrograms)
+                    {
+                        <MudSelectItem Value="@x.ProgramId">@x.Name</MudSelectItem>
+                    }
+                </MudSelect>
+             </MudItem>
+
+             <MudItem xs="12" sm="6">
+                <MudSelect Value="selectedProgs[1].ProgramId"
+                           Label="Second Choice"
+                           ValueChanged="EventCallback.Factory.Create<int>(this,value => OnSelectedProgram(value,SelectedProgramTypes.Second))"
+                           Variant="Variant.Outlined"
+                           Required=true
+                           ShrinkLabel>
+                    <MudSelectItem Value="0" Disabled=true>Select Program</MudSelectItem>
+                    @foreach (var x in SecondSelectedPrograms)
+                    {
+                        <MudSelectItem Value="@x.ProgramId">@x.Name</MudSelectItem>
+                    }
+                </MudSelect>
+             </MudItem>
+         </MudGrid>
+
+         <MudText Typo="Typo.h6">I HEREBY AFFIRM THAT:</MudText>
+         <MudDivider Class="mb-4" />
+         <MudGrid GutterSize="0" Class="mb-2">
+             <MudStack Spacing="0">
+                 <MudCheckBox Value="TruthfulnessChecked"
+                              Color="Color.Dark"
+                              Size="Size.Medium"
+                              ValueChanged="EventCallback.Factory.Create<bool>(this, value => OnAggrement(value,1))"
+                              Label="THE ABOVE INFORMATION GIVEN ARE TRUE AND CORRECT." />
+
+                 <MudCheckBox Value="FalseInfoChecked"
+                              Color="Color.Dark"
+                              Size="Size.Medium"
+                              ValueChanged="EventCallback.Factory.Create<bool>(this, value => OnAggrement(value,2))"
+                              Label="I UNDERSTAND THAT GIVING FALSE INFORMATION WILL AUTOMATICALLY DISQUALIFY ME FOR ADMISSION." />
+
+                 <MudCheckBox Value="AuthorizationChecked"
+                              Color="Color.Dark"
+                              Size="Size.Medium"
+                              ValueChanged="EventCallback.Factory.Create<bool>(this, value => OnAggrement(value,3))"
+                              Label=" IF ADMITTED, BY THE RULES AND REGULATIONS OF THE BTECH, I HEREBY ALLOW/AUTHORIZE TO USE, COLLECT, AND PROCESS THE INFORMATION FOR LEGITIMATE PURPOSES SPECIFICALLY THE PROMOTION OF THE COLLEGE PROGRAMS AND SERVICES." />
+
+
+                 <MudCheckBox Value="DataPrivacyChecked"
+                              Color="Color.Dark"
+                              Size="Size.Medium"
+                              ValueChanged="EventCallback.Factory.Create<bool>(this, value => OnAggrement(value,4))"
+                              Label="I ALLOW AUTHORIZED PERSONNEL TO PROCESS THE INFORMATION PURSUANT TO THE DATA PRIVACY OF POLICIES OF THE COLLEGE." />
+
+                 <MudCheckBox Value="CredentialsChecked"
+                              Color="Color.Dark"
+                              Size="Size.Medium"
+                              ValueChanged="EventCallback.Factory.Create<bool>(this, value => OnAggrement(value,5))"
+                              Label="I ACKNOWLEDGE THAT ALL DOCUMENTS SUBMITTED FOR ADMISSION SHALL BECOME THE PROPERTY OF THE BTECH, AND THAT CREDENTIALS WILL BE ISSUED IF I TRANSFER TO ANOTHER EDUCATIONAL INSTITUTION." />
+             </MudStack>
+         </MudGrid>
+
+         <MudDivider Class="my-3" />
+         <MudGrid Justify="Justify.Center">
+             <MudItem xs="12" sm="6">
+                 <MudStack Direction="Row" Justify="Justify.Center">
+                     <MudButton Color="Color.Success"
+                                Variant="Variant.Filled"
+                                Disabled="@( !(isValidated && AllItemsChecked && selectedProgs[0].ProgramId != 0 && selectedProgs[1].ProgramId != 0
+                                            && (model.IsSameAddress || (!model.IsSameAddress &&  address[1].ProvinceId != 0 && address[1].MunicipalityId != 0 && address[1].BarangayId != 0))
+                                            ) )"
+                                OnClick="OpenComponentSubmitConfirm">
+                         Submit
+                     </MudButton>
+                 </MudStack>
+             </MudItem>
+         </MudGrid>
+
+     </MudForm>
+ </MudGrid>
+
+
+@code {
+    private MudForm form = new();
+    private bool isValidated = false;
+    private SaveApplicantModel model = new ();
+
+    private List<SaveAddressApplicantModel> address = new()
+    {
+        new SaveAddressApplicantModel
+        {
+            AddressType = AddressTypes.Permanent
+        },
+        new SaveAddressApplicantModel
+        {
+            AddressType = AddressTypes.Present
+        }
+    };
+    private List<SavePrevSchoolApplicantModel> preSchools = new()
+    {
+        new SavePrevSchoolApplicantModel
+        {
+            EducationType = EducationBackgroundTypes.Elem
+        },
+        new SavePrevSchoolApplicantModel
+        {
+            EducationType = EducationBackgroundTypes.Junior
+        },
+        new SavePrevSchoolApplicantModel
+        {
+            EducationType = EducationBackgroundTypes.Senior
+        },
+        new SavePrevSchoolApplicantModel
+        {
+            EducationType = EducationBackgroundTypes.Tertiary
+        },
+    };
+    private List<SaveSelectedProgApplicantModel> selectedProgs = new()
+     {
+        new SaveSelectedProgApplicantModel
+        {
+            SelectedProgramType = SelectedProgramTypes.First
+        },
+        new SaveSelectedProgApplicantModel
+        {
+            SelectedProgramType = SelectedProgramTypes.Second
+        }
+     };
+
+    private List<SaveProvinceModel> PermanentProvinces { get; set; } = new();
+    private List<SaveMunicipalityModel> PermanentMunicipalities { get; set; } = new();
+    private List<SaveBarangayModel> PermanentBarangays{ get; set; } = new();
+
+    private List<SaveProvinceModel> CurrentProvinces { get; set; } = new();
+    private List<SaveMunicipalityModel> CurrentMunicipalities { get; set; } = new();
+    private List<SaveBarangayModel> CurrentBarangays { get; set; } = new();
+
+    private List<LookupProgramModel> FirstSelectedPrograms { get; set; } = new();
+    private List<LookupProgramModel> SecondSelectedPrograms { get; set; } = new();
+
+    private bool TruthfulnessChecked { get; set; } = false;
+    private bool FalseInfoChecked { get; set; } = false;
+    private bool AuthorizationChecked { get; set; } = false;
+    private bool DataPrivacyChecked { get; set; } = false;
+    private bool CredentialsChecked { get; set; } = false;
+
+    private bool AllItemsChecked =>
+    TruthfulnessChecked &&
+    FalseInfoChecked &&
+    AuthorizationChecked &&
+    DataPrivacyChecked &&
+    CredentialsChecked;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ApplicantForm();
+    }
+
+    private async Task ApplicantForm()
+    {
+        model = await _Service.Find();
+
+        if(model.Address != null && model.Address.Count > 0)
+            address = model.Address;
+
+        if (model.PrevSchools != null && model.PrevSchools.Count >0)
+            preSchools = model.PrevSchools;
+
+        if (model.SelectedPrograms != null && model.SelectedPrograms.Count > 0)
+            selectedProgs = model.SelectedPrograms;
+
+        if (model.PermanetProvinces != null)
+            PermanentProvinces = model.PermanetProvinces;
+
+        if (model.PermanetMunicipalities != null)
+            PermanentMunicipalities = model.PermanetMunicipalities;
+
+        if (model.PermanentBarangays != null)
+            PermanentBarangays = model.PermanentBarangays;
+
+        if (model.CurrentProvinces != null)
+            CurrentProvinces = model.CurrentProvinces;
+
+        if (model.CurrentMunicipalities != null)
+            CurrentMunicipalities = model.CurrentMunicipalities;
+
+        if (model.CurrentBarangays != null)
+            CurrentBarangays = model.CurrentBarangays;
+
+        var programs = await _ServiceProgram.Lookup(Array.Empty<int>());
+
+        if (programs != null) {
+            FirstSelectedPrograms = programs.Where(x => x.ProgramId != selectedProgs[1].ProgramId).Select(x=> new LookupProgramModel(){ProgramId=x.ProgramId,Name=x.Name}).ToList();
+            SecondSelectedPrograms = programs.Where(x => x.ProgramId != selectedProgs[0].ProgramId).Select(x=> new LookupProgramModel(){ProgramId=x.ProgramId,Name=x.Name}).ToList();
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task OnSaveDraft()
+    {
+
+        model.Address = address;
+        model.PrevSchools = preSchools;
+        model.SelectedPrograms = selectedProgs;
+
+        var success = await _Service.SaveDraft(model);
+        await ApplicantForm();
+    }
+
+    private async Task OpenComponentSubmitConfirm()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+
+        var prop = new DialogParameters
+            {
+                {nameof(ComponentStep1Confirm.applicantId), model.ApplicantId}
+            };
+
+        var dialog = await DialogService.ShowAsync<ComponentStep1Confirm>("Admision Form", prop, options);
+        var result = await dialog.Result;
+
+        if (result != null)
+            if (!result.Canceled)
+            {
+                await Task.Delay(2000);
+                Navigation.NavigateTo("/loading", true);
+            }
+    }
+
+    #region Select Options methods
+
+    private async Task OnApplicantTypeChanged(ApplicantTypes newValue)
+    {
+        model.ApplicantType = newValue;
+        await OnSaveDraft();
+    }
+
+    private async Task OnGenderTypeChange(GenderTypes gender)
+    {
+        model.Gender = gender;
+        await OnSaveDraft();
+    }
+
+    private async Task OnAddressChange(bool IsPermanent,int valueId, int column)
+    {
+        if (IsPermanent)
+        {
+            switch (column)
+            {
+                case 1:
+                    address[0].ProvinceId = valueId;
+                    break;
+                case 2:
+                    address[0].MunicipalityId = valueId;
+                    break;
+                default:
+                    address[0].BarangayId = valueId;
+                    break;
+            }  
+        }else
+        {
+            switch (column)
+            {
+                case 1:
+                    address[1].ProvinceId = valueId;
+                    break;
+                case 2:
+                    address[1].MunicipalityId = valueId;
+                    break;
+                default:
+                    address[1].BarangayId = valueId;
+                    break;
+            }
+        }
+        await OnSaveDraft();
+    }
+
+    private async Task OnSelectChange(Enum value)
+    {
+        switch (value)
+        {
+            case ApplicantTypes applicantType:
+                model.ApplicantType = applicantType;
+                break;
+
+            case GenderTypes genderTypes:
+                model.Gender = genderTypes;
+                break;
+
+            case CivilStatus civilStatus:
+                model.CivilStatus = civilStatus;
+                break;
+        }
+
+        await OnSaveDraft();
+    }
+
+    private async Task OnSameAddress(bool value)
+    {
+        model.IsSameAddress = value;
+
+        if (model.IsSameAddress)
+        {
+            address[1].ProvinceId = 0;
+            address[1].MunicipalityId= 0;
+            address[1].BarangayId= 0;
+            address[1].Street = string.Empty;
+            address[1].ZipCode = string.Empty;
+        }
+
+        await OnSaveDraft();
+    }
+
+    private async Task OnSelectedProgram(int value, SelectedProgramTypes selectedProgramTypes)
+    {
+        switch (selectedProgramTypes)
+        {
+            case SelectedProgramTypes.First: selectedProgs[0].ProgramId = value; break;
+            case SelectedProgramTypes.Second: selectedProgs[1].ProgramId = value; break;
+        }
+
+        await OnSaveDraft();
+    }
+
+    private async Task OnQuestions(bool value, int rowNo)
+    {
+        switch (rowNo)
+        {
+            case 1: model.IsIndigenous = value; break;
+            case 2: model.IsSoloParent = value; break;
+            case 3: model.IsWithDisabilty = value; break;
+            case 4: model.Is4psMember = value; break;
+        }
+
+        await OnSaveDraft();
+    }
+
+    private void OnAggrement(bool value, int rowNo)
+    {
+        switch (rowNo)
+        {
+            case 1: TruthfulnessChecked = value; break;
+            case 2: FalseInfoChecked = value; break;
+            case 3: AuthorizationChecked = value; break;
+            case 4: DataPrivacyChecked = value; break;
+            case 5: CredentialsChecked = value; break;
+        }
+        StateHasChanged();
+    }
+
+    #endregion Select Options methods
+
+}

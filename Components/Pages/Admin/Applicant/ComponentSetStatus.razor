@@ -1,0 +1,89 @@
+﻿@using BTECH_APP.Models.Admin.Program
+@using BTECH_APP.Services.Admin.Interfaces
+@using static BTECH_APP.Enums
+@inject IApplicantService _Service
+@inject ISnackbar Snackbar
+
+
+<MudDialog Style="width:500px">
+    <DialogContent>
+        <div style="display:flex;flex-direction:column;justify-content:center; align-items:center">
+            <MudText>
+                @GetConfirmationMessage
+            </MudText>
+
+            @if(status == ApplicantStatus.Scheduled)
+            {
+                <MudDatePicker Label="Exam Schedule"
+                               @bind-Date="ScheduleDate"
+                               Placeholder="Select Date"
+                               Editable="true"
+                               Variant="Variant.Outlined" />
+            }
+
+            <MudTextField T="string"
+                          @bind-Value="remarks"
+                          Label="Enter your remarks"
+                          Placeholder="Type here..."
+                          Lines="5"
+                          FullWidth="true"
+                          Variant="Variant.Filled"
+                          Margin="Margin.Dense"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Edit"
+                          Style="resize: vertical;" />
+
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="()=>CloseModal(false)" Size="Size.Small">Cancel</MudButton>
+        <MudButton Color="Color.Success" Variant="Variant.Filled" Size="Size.Small" OnClick="Confirm">Yes, Submit</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public int applicantId { get; set; }
+    [Parameter]
+    public ApplicantStatus status { get; set; }
+
+    private DateTime? ScheduleDate = DateTime.UtcNow;
+
+    private string GetConfirmationMessage = string.Empty;
+    private string SuccessMessage = string.Empty;
+    private string? remarks { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        GetConfirmationMessage = Helpers.Helper.StatusConfimationMessage(status);
+        SuccessMessage = Helpers.Helper.StatusSuccessMessage(status);
+    }
+
+    private async Task Confirm()
+    {
+        if (applicantId != 0)
+        {
+            bool success = await _Service.SetStatus(applicantId, remarks, status, ScheduleDate);
+
+            if (success)
+            {
+                Snackbar.Add($"{SuccessMessage}", Severity.Success);
+                await CloseModal(true);
+            }
+        }
+    }
+
+    private async Task CloseModal(bool success)
+    {
+        if (success)
+            MudDialog.Close(DialogResult.Ok(true));
+        else
+        {
+            await Task.Delay(100);
+            MudDialog.Cancel();
+        }
+    }
+}

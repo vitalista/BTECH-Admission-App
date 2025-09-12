@@ -1,0 +1,47 @@
+﻿<MudPaper Class="pa-6" Elevation="3" Square Style="background-color:white; color:#212121; border-top:1px solid #e0e0e0;">
+    <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
+
+        <MudGrid GutterSize="24px">
+
+             <MudItem xs="12" sm="6" md="12">
+                 <div style="display: flex; flex-direction: column; gap: 8px; align-items: center;">
+                     <MudAvatar Style="height:100px; width:100px;background:white">
+                         <MudImage Src="images/logo.png" Alt="BTECH Logo" />
+                     </MudAvatar>
+                     <MudText Typo="Typo.h6" Style="font-weight: 600;">Admissions</MudText>
+                     <MudText Typo="Typo.body2" Align="Align.Center">
+                         Baliwag Polytechnic College (BTECH) offers accessible, affordable, and quality education for all.
+                         Explore our academic programs and begin your journey with us.
+                     </MudText>
+                     <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/admissions">Learn More</MudButton>
+                 </div>
+             </MudItem>
+
+             <MudItem xs="12" sm="6" md="12" Style="display:flex;flex-direction:column; align-items: center;">
+                 <MudText Typo="Typo.h6" Class="mb-2" Style="font-weight: 600;">Contact Us</MudText>
+                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                     <MudIcon Icon="@Icons.Material.Filled.LocationOn" />
+                     <MudText Typo="Typo.body2">Rizal Street, Baliwag, Bulacan</MudText>
+                 </div>
+                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                     <MudIcon Icon="@Icons.Material.Filled.Phone" />
+                     <MudText Typo="Typo.body2">(044) 802 6795</MudText>
+                 </div>
+                 <div style="display: flex; align-items: center; gap: 8px;">
+                     <MudIcon Icon="@Icons.Material.Filled.Email" />
+                     <MudText Typo="Typo.body2">baliwagpolytechnic@btech.edu.ph</MudText>
+                 </div>
+             </MudItem>
+
+        </MudGrid>
+
+        <MudDivider Class="my-4" />
+
+        <div style="display: flex; justify-content:center; flex-wrap: wrap; font-size: 13px; color: #757575;">
+            <MudText Typo="Typo.caption">
+                © @DateTime.Now.Year Baliwag Polytechnic College. All Rights Reserved.
+            </MudText>
+        </div>
+
+    </MudContainer>
+</MudPaper>

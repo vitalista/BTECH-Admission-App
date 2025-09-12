@@ -1,0 +1,39 @@
+﻿@using BTECH_APP.Entities
+@using static BTECH_APP.Enums
+
+<div style="display: flex; flex-direction:column; width: 100%;">
+    <div style="font-weight: 500">Application Status Distribution </div>
+    <MudItem Style="display: flex; justify-content: center; width: 100%">
+        <MudChart ChartType="ChartType.Pie" InputData="@Datas" @bind-SelectedIndex="Index" InputLabels="@AllLabels" Width="100%" Height="200px" />
+    </MudItem>
+</div>
+
+
+@code {
+    [Parameter]
+    public double[] Datas { get; set; } = Array.Empty<double>();
+
+    private int Index = -1;
+    private string[] AllLabels =
+    {
+        ApplicantStatus.Submitted.GetDisplayName(),
+        ApplicantStatus.Scheduled.GetDisplayName(),
+        ApplicantStatus.Recommending.GetDisplayName(),
+        ApplicantStatus.Admitted.GetDisplayName(),
+        ApplicantStatus.Rejected.GetDisplayName(),
+    };
+
+    private double[] FilteredData = Array.Empty<double>();
+    private string[] FilteredLabels = Array.Empty<string>();
+
+    protected override void OnParametersSet()
+    {
+        var result = Datas
+            .Select((value, index) => new { value, label = AllLabels[index] })
+            .Where(x => x.value > 0)
+            .ToList();
+
+        FilteredData = result.Select(x => x.value).ToArray();
+        FilteredLabels = result.Select(x => x.label).ToArray();
+    }
+}

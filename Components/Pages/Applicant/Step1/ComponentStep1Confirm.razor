@@ -1,0 +1,49 @@
+﻿@using System.ComponentModel.DataAnnotations
+@inject MudBlazor.ISnackbar Snackbar
+@inject NavigationManager Navigation
+@inject IStep1ApplicantService _Service
+@using BTECH_APP.Services.Applicant.Interfaces
+@using Helpers
+
+
+<MudDialog Style="width:500px">
+    <DialogContent>
+        <div style="display:flex;flex-direction:column;justify-content:center; align-items:center">
+            <MudText>
+                Are you sure you want to  <b>Submit</b> your application form?
+            </MudText>
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="()=>CloseModal(false)" Size="Size.Small">Cancel</MudButton>
+        <MudButton Color="Color.Success" Variant="Variant.Filled" Size="Size.Small" OnClick="Confirm">Yes, Submit</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter]
+    public int applicantId { get; set; } = 0;
+
+    private async Task Confirm()
+    {
+        if (applicantId != 0)
+        {
+            await _Service.Save(applicantId);
+            Snackbar.Add("Form successfully submitted.", Severity.Success);
+            await CloseModal(true);
+        }
+    }
+
+    private async Task CloseModal(bool success)
+    {
+        if (success)
+            MudDialog.Close(DialogResult.Ok(true));
+        else
+        {
+            await Task.Delay(100);
+            MudDialog.Cancel();
+        }
+    }
+}

@@ -1,0 +1,162 @@
+﻿@using BTECH_APP.Models
+@using BTECH_APP.Services.Applicant.Interfaces
+@using static BTECH_APP.Enums
+@inject IApplicantService _Service
+@inject UserContext _userContext
+
+<div class="custom-stepper">
+
+    @if (CurrentStatus == ApplicantStatus.Draft)
+    {
+        <ComponentStepperActive title="Step 1" subTitle="Application Form" />
+        <ComponentStepperPending title="Step 2" subTitle="Requirements" />
+        <ComponentStepperPending title="Step 3" subTitle="Application Review" />
+        <ComponentStepperPending title="Step 4" subTitle="Exam Schedule" />
+        <ComponentStepperPending title="Step 5" subTitle="Application Status" />
+    }
+    else if (CurrentStatus == ApplicantStatus.ForRequirements)
+    {
+        <ComponentStepperCompleted title="Step 1" subTitle="Application Form" />
+        <ComponentStepperActive title="Step 2" subTitle="Requirements" />
+        <ComponentStepperPending title="Step 3" subTitle="Application Review" />
+        <ComponentStepperPending title="Step 4" subTitle="Exam Schedule" />
+        <ComponentStepperPending title="Step 5" subTitle="Application Status" />
+    }
+    else if (CurrentStatus == ApplicantStatus.Submitted
+            || CurrentStatus == ApplicantStatus.Resubmitted
+            || CurrentStatus == ApplicantStatus.Endorsed
+            || CurrentStatus == ApplicantStatus.ReturnedToVerifier
+            || CurrentStatus == ApplicantStatus.ForSchedule)
+    {
+        <ComponentStepperCompleted title="Step 1" subTitle="Application Form" />
+        <ComponentStepperCompleted title="Step 2" subTitle="Requirements" />
+        <ComponentStepperActive title="Step 3" subTitle="Application Review" />
+        <ComponentStepperPending title="Step 4" subTitle="Exam Schedule" />
+        <ComponentStepperPending title="Step 5" subTitle="Application Status" />
+    }
+    else if (CurrentStatus == ApplicantStatus.Returned)
+    {
+        <ComponentStepperCompleted title="Step 1" subTitle="Application Form" />
+        <ComponentStepperActive title="Step 2" subTitle="Requirements Returned" />
+        <ComponentStepperPending title="Step 3" subTitle="Application Review" />
+        <ComponentStepperPending title="Step 4" subTitle="Exam Schedule" />
+        <ComponentStepperPending title="Step 5" subTitle="Application Status" />
+    }
+    else if (CurrentStatus == ApplicantStatus.Scheduled)
+    {
+        <ComponentStepperCompleted title="Step 1" subTitle="Application Form" />
+        <ComponentStepperCompleted title="Step 2" subTitle="Requirements" />
+        <ComponentStepperCompleted title="Step 3" subTitle="Application Review" />
+        <ComponentStepperActive title="Step 4" subTitle="Exam Schedule" />
+        <ComponentStepperPending title="Step 5" subTitle="Application Status" />
+    }
+ 
+    else if (CurrentStatus == ApplicantStatus.Recommending)
+    {
+        <ComponentStepperCompleted title="Step 1" subTitle="Application Form" />
+        <ComponentStepperCompleted title="Step 2" subTitle="Requirements" />
+        <ComponentStepperCompleted title="Step 3" subTitle="Application Review" />
+        <ComponentStepperCompleted title="Step 4" subTitle="Exam Schedule" />
+        <ComponentStepperActive title="Step 5" subTitle="Recommending" />
+    }
+    else if (CurrentStatus == ApplicantStatus.Cancelled)
+    {
+        <ComponentStepperCompleted title="Step 1" subTitle="Application Form" />
+        <ComponentStepperCompleted title="Step 2" subTitle="Requirements" />
+        <ComponentStepperCompleted title="Step 3" subTitle="Application Review" />
+        <ComponentStepperPending title="Step 4" subTitle="Exam Schedule" />
+        <ComponentStepperActive title="Step 5" subTitle="Applicant Status" />
+    }
+    else if (CurrentStatus == ApplicantStatus.Admitted || CurrentStatus == ApplicantStatus.Rejected)
+    {
+        <ComponentStepperCompleted title="Step 1" subTitle="Application Form" />
+        <ComponentStepperCompleted title="Step 2" subTitle="Requirements" />
+        <ComponentStepperCompleted title="Step 3" subTitle="Application Review" />
+        <ComponentStepperCompleted title="Step 4" subTitle="Exam Schedule" />
+        <ComponentStepperCompleted title="Step 5" subTitle="Application Status" />
+    }
+
+</div>
+
+@code {
+    [Parameter]
+    public ApplicantStatus CurrentStatus { get; set; }
+}
+
+<style>
+    .custom-stepper {
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        margin-top: 50px;
+        padding-left: 30px;
+    }
+
+    .stepper-item {
+        display: flex;
+        align-items: flex-start;
+        position: relative;
+        margin-bottom: 24px;
+    }
+
+    .step-indicator {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 16px;
+        z-index: 1;
+    }
+
+        .step-indicator.active {
+            background-color: white;
+            border: 2px solid #4CAF50;
+        }
+
+        .step-indicator.completed {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .step-indicator.pending {
+            background-color: gray;
+        }
+
+    .active-circle {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #4CAF50;
+    }
+
+    .step-content {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .step-title {
+        font-weight: bold;
+        margin-bottom: 4px;
+    }
+
+    .step-subtitle {
+        color: #aaa;
+    }
+
+    .step-line {
+        position: absolute;
+        left: 12px;
+        top: 24px;
+        width: 2px;
+        height: 100%;
+        background-color: gray;
+        z-index: 0;
+    }
+
+        .step-line.completed {
+            background-color: #4CAF50;
+        }
+</style>
+

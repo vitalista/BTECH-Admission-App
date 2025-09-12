@@ -1,0 +1,49 @@
+﻿@page "/loading"
+@layout Components.Layout.MainLayout;
+@using BTECH_APP.Entities.Auth
+@using BTECH_APP.Models
+@using BTECH_APP.Models.Auth
+@using Blazored.LocalStorage
+@using static BTECH_APP.Enums
+@inject NavigationManager Navigation
+@inject IAuthService _Service
+@inject UserContext _userContext
+
+
+   <div style="width:100%;height:80vh;display:flex;flex-direction:column;justify-content:center;align-items:center">
+    <MudProgressCircular Color="Color.Success" Indeterminate="true" Size="Size.Large"/>
+    <MudText Color="Color.Success" Typo="Typo.h6">Loading</MudText>
+   </div>
+
+@code {
+    UserAccess userAccess = new UserAccess();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await _Service.GetCurrentUser();
+
+            if (_userContext.CurrentUser.UserId == 0){
+                Navigation.NavigateTo("/", true);
+                return;
+            }
+
+            await Task.Delay(2000);
+
+            var role = _userContext.CurrentUser.Role;
+
+            if (role == RoleTypes.NotUser ||
+                !(role == RoleTypes.Admin ||
+                  role == RoleTypes.Verifier ||
+                  role == RoleTypes.Scheduler ||
+                  role == RoleTypes.Applicant))
+            {
+                Navigation.NavigateTo("/Not-Authorized", true);
+                return;
+            }
+
+            Navigation.NavigateTo(userAccess.RolePermissions[_userContext.CurrentUser.Role][1],true);
+        }
+    }
+}

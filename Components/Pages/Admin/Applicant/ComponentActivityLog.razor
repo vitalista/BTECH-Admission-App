@@ -1,0 +1,23 @@
+﻿@using BTECH_APP.Models.Admin.Applicant
+
+<MudDialog Style="width:800px; max-height:50vh; overflow-y:auto;">
+    <DialogContent>
+        <MudTable Items="logs" Hover="true" Bordered="true" Elevation="0" Dense="true">
+            <HeaderContent>
+                <MudTh>Date</MudTh>
+                <MudTh>Description</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Date">
+                    @context.Date.ToString("MMM dd, yyyy @ hh:mm tt")
+                </MudTd>
+                <MudTd DataLabel="Description">@((MarkupString)(context.Description ?? string.Empty))</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </DialogContent>
+    </MudDialog>
+
+    @code {
+    [Parameter]
+    public List<ActivityLogApplicantModel> logs { get; set; } = new();
+}

@@ -1,0 +1,19 @@
+﻿@page "/logout"
+@layout Components.Layout.MainLayout
+@inject NavigationManager Navigation
+@inject IAuthService _Service
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<form id="logoutForm" method="post" action="/logout-page" style="display: none;">
+</form>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("submitLogoutForm");
+        }
+    }
+}

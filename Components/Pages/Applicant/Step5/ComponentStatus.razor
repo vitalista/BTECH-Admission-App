@@ -1,0 +1,57 @@
+﻿@using BTECH_APP.Services.Applicant.Interfaces
+@using static BTECH_APP.Enums
+@inject IStep5ApplicantService _Service;
+
+<MudGrid Class="mx-auto my-4 p-6" Elevation="0" Style="max-width: 1200px;">
+    @if (status == ApplicantStatus.Admitted)
+    {
+        <MudItem xs="12">
+            <MudPaper Elevation="2" Class="p-6" Style="background-color: #e8f5e9; border-left: 6px solid #43a047;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large" Color="Color.Success" />
+                    <div>
+                        <MudText Typo="Typo.h5" Color="Color.Success">
+                            Congratulations!
+                        </MudText>
+                        <MudText Typo="Typo.body1">
+                            You are admitted to the program <strong>@programName</strong>.
+                        </MudText>
+                    </div>
+                </div>
+            </MudPaper>
+        </MudItem>
+    }
+    else if(status == ApplicantStatus.Rejected || status == ApplicantStatus.Cancelled)
+    {
+        <MudItem xs="12">
+            <MudPaper Elevation="2" Class="p-6" Style="background-color: #ffebee; border-left: 6px solid #e53935;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <MudIcon Icon="@Icons.Material.Filled.Cancel" Size="Size.Large" Color="Color.Error" />
+                    <div>
+                        <MudText Typo="Typo.h5" Color="Color.Error">
+                            Application Status: @status.GetDisplayName()
+                        </MudText>
+                        <MudText Typo="Typo.body1">
+                            We're sorry. You were not admitted to any program because @(string.IsNullOrEmpty(reason) ? "of some reason" : reason).
+                            Thank you for your interest and we encourage you to apply again in the future.
+                        </MudText>
+                    </div>
+                </div>
+            </MudPaper>
+        </MudItem>
+    }
+</MudGrid>
+
+@code{
+    private ApplicantStatus status { get; set; } = ApplicantStatus.Draft;
+    private string programName { get; set; } = string.Empty;
+    private string reason { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result  = await _Service.Status();
+        status = result.status;
+        programName = result.programName;
+        reason = result.reason;
+    }
+}

@@ -1,0 +1,123 @@
+﻿@using System.ComponentModel.DataAnnotations
+@inject MudBlazor.ISnackbar Snackbar
+@inject NavigationManager Navigation
+@using BTECH_APP.Models.Admin.UserManagement
+@using BTECH_APP.Services.Admin.Interfaces
+@inject IUserManagementService _Service
+@using Helpers
+@using static BTECH_APP.Enums
+
+
+<MudDialog Style="width:500px">
+    <DialogContent>
+        <MudForm Model="@model" @ref="form" @bind-IsValid="@isValidated">
+
+            <MudTextField @bind-Value="model.FirstName"
+                          InputType="InputType.Text"
+                          Label="First Name"
+                          Variant="Variant.Outlined"
+                          Required="true"
+                          For="@(() => model.FirstName)" />
+
+            <MudTextField @bind-Value="model.MiddleName"
+                          InputType="InputType.Text"
+                          Label="Middle Name"
+                          Variant="Variant.Outlined"
+                          Required="false"
+                          For="@(() => model.MiddleName)" />
+
+            <MudTextField @bind-Value="model.LastName"
+                          InputType="InputType.Text"
+                          Label="Last Name"
+                          Variant="Variant.Outlined"
+                          Required="true"
+                          For="@(() => model.LastName)" />
+
+            <MudTextField @bind-Value="model.Suffix"
+                          InputType="InputType.Text"
+                          Label="Suffix"
+                          Variant="Variant.Outlined"
+                          Required="false"
+                          For="@(() => model.Suffix)" />
+
+            <MudTextField @bind-Value="model.Email"
+                          InputType="InputType.Email"
+                          Label="Email Address"
+                          Variant="Variant.Outlined"
+                          Validation="@(new EmailAddressAttribute() {ErrorMessage = "The email address is invalid"})"
+                          Required="true"
+                          For="@(() => model.Email)" />
+
+            <MudDatePicker Label="Birth Date"
+                           @bind-Date="@model.BirthDate"
+                           Placeholder="Select Date"
+                           Editable="true"
+                           Variant="Variant.Outlined" />
+
+            <MudGrid GutterSize="16px" Class="mb-1">
+                <MudItem xs="12" sm="6">
+                    <MudSelect T=RoleTypes @bind-Value="@model.Role" Label="Role" Variant="Variant.Outlined" Dense="true" Class="w-full" Margin="Margin.Dense">
+                        <MudSelectItem Value=RoleTypes.Admin>@RoleTypes.Admin.GetDisplayName()</MudSelectItem>
+                            <MudSelectItem Value=RoleTypes.Verifier>@RoleTypes.Verifier.GetDisplayName()</MudSelectItem>
+                            <MudSelectItem Value=RoleTypes.Scheduler>@RoleTypes.Scheduler.GetDisplayName()</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6">
+                        <MudSelect T="bool" @bind-Value="@model.IsActive" Label="Status" Variant="Variant.Outlined" Dense="true" Class="w-full" Margin="Margin.Dense" Required="true">
+                            <MudSelectItem Value="true">Active</MudSelectItem>
+                            <MudSelectItem Value="false">Inactive</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                </MudGrid>
+
+                <MudButton Type="Submit" Color="Color.Success" Disabled="@(!isValidated && model.Role == 0)" Variant="Variant.Filled" Class="mt-3" OnClick="OnValidSubmit">
+                    Save Changes
+                </MudButton>
+                <MudButton Class="mt-2" OnClick="() => CloseModal(false)">Cancel</MudButton>
+            </MudForm>
+        </DialogContent>
+    </MudDialog>
+
+    @code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter]
+    public SaveUserManagementModel model { get; set; } = new();
+    private MudForm form = new();
+    private bool isValidated = false;
+
+    private async Task OnValidSubmit()
+    {
+        await form.Validate();
+
+        if (form.IsValid)
+        {
+            var (success, errorMessage) = await _Service.Save(model);
+
+            if (success)
+            {
+                Snackbar.Add("Successfully Updated.", Severity.Success);
+                await CloseModal(true);
+            }
+            else
+                Snackbar.Add(errorMessage, Severity.Error);
+        }
+        else
+            Snackbar.Add("Failed", Severity.Error);
+
+    }
+
+    private async Task CloseModal(bool success)
+    {
+        if (success)
+            MudDialog.Close(DialogResult.Ok(true));
+        else
+        {
+            await form.ResetAsync();
+
+            await Task.Delay(100);
+            MudDialog.Cancel();
+        }
+    }
+}

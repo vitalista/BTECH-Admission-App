@@ -1,0 +1,46 @@
+﻿@using BTECH_APP.Components.Pages.Auth
+@inject IDialogService DialogService
+@inject IAuthService _Service
+
+<MudAppBar Style="background-color:white; color:black; height:80px;" Fixed="true">
+    <div style="display: flex; align-items: center; width: 100%; padding-top:10px">
+        <MudAvatar Style="height:70px; width:70px; background:white">
+            <MudImage Src="images/logo.png" Style="background: transparent; box-shadow: none;" />
+        </MudAvatar>
+
+        <MudSpacer /> 
+
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <MudButton Href="/" StartIcon="@Icons.Material.Filled.Home" Color="Color.Inherit">
+                Home
+            </MudButton>
+            <MudButton OnClick="OpenDialogRegisterForm" Disabled="@IsOpen" StartIcon="@Icons.Material.Filled.AppRegistration" Color="Color.Inherit">
+                Apply Now
+            </MudButton>
+            <MudButton OnClick="OpenDialogLoginForm" StartIcon="@Icons.Material.Filled.Login" Color="Color.Inherit">
+                Login
+            </MudButton>
+        </div>
+    </div>
+</MudAppBar>
+
+
+
+@code {
+    [Parameter]
+    public bool IsOpen { get; set; } = false;
+
+    private Task OpenDialogLoginForm()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+
+        return DialogService.ShowAsync<ComponentLoginForm>("Login", options);
+    }
+
+    private Task OpenDialogRegisterForm()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+
+        return DialogService.ShowAsync<ComponentRegisterForm>("Create Account", options);
+    }
+}

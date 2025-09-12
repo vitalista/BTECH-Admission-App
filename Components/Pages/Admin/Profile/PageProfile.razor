@@ -1,0 +1,255 @@
+﻿@page "/profile"
+@using BTECH_APP.Components.Shared
+@layout Components.Layout.AdminLayout
+@inject MudBlazor.ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IUserManagementService _Service
+@inject IAuthService _AuthService
+@inject ILocalStorageService _LocalStorage
+@inject UserContext _userContext
+@inject NavigationManager Navigation
+@using BTECH_APP.Models
+@using BTECH_APP.Models.Admin.UserManagement
+@using BTECH_APP.Models.Auth
+@using BTECH_APP.Services.Admin.Interfaces
+@using Blazored.LocalStorage
+@using Helpers
+@using System.ComponentModel.DataAnnotations
+@inject IJSRuntime JS
+
+
+<div style="width:100%">
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-6">
+    <MudPaper Elevation="0" Class="p-6 shadow-none">
+        <MudText Typo="Typo.h5" Class="mb-4">Profile Information</MudText>
+
+        <MudForm Model="@model" @ref="form" @bind-IsValid="@isValidated">
+
+            <MudGrid GutterSize="16px">
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="model.FirstName"
+                                  Label="First Name"
+                                  Variant="Variant.Outlined"
+                                  Required="true"
+                                  For="@(() => model.FirstName)" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="model.MiddleName"
+                                  Label="Middle Name"
+                                  Variant="Variant.Outlined"
+                                  For="@(() => model.MiddleName)" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="model.LastName"
+                                  Label="Last Name"
+                                  Variant="Variant.Outlined"
+                                  Required="true"
+                                  For="@(() => model.LastName)" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="model.Suffix"
+                                  Label="Suffix"
+                                  Variant="Variant.Outlined"
+                                  For="@(() => model.Suffix)" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="model.Email"
+                                  Label="Email Address"
+                                  Variant="Variant.Outlined"
+                                  Required="true"
+                                  InputType="InputType.Email"
+                                  Validation="@(new EmailAddressAttribute() { ErrorMessage = "Invalid email address" })"
+                                  For="@(() => model.Email)" />
+                </MudItem>
+
+                 <MudItem xs="12" sm="6">
+                <MudDatePicker Label="Birth Date"
+                               @bind-Date="@model.BirthDate"
+                               Placeholder="Select Date"
+                               Editable="true"
+                               Variant="Variant.Outlined" />
+                </MudItem>
+            </MudGrid>
+
+            <MudStack Class="mt-4" Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                <MudButton Color="Color.Success"
+                           Variant="Variant.Filled"
+                           Disabled="@(Helper.ObjectIsDifferent(originalModel, model) == false)"
+                           OnClick="OnValidSubmit">
+                    Update Profile
+                </MudButton>
+            </MudStack>
+        </MudForm>
+
+        <MudText Typo="Typo.h5" Class="mb-4" Style="margin-top:20px">Change Password</MudText>
+        <MudForm Model="@passwordModel" @ref="changePasswordForm" @bind-IsValid="@isChangePasswordValidated">
+
+            <MudGrid GutterSize="16px">
+                <MudItem xs="12" sm="4">
+                    <MudTextField @bind-Value="passwordModel.OldPassword"
+                                  Label="Current Password"
+                                  Variant="Variant.Outlined"
+                                  Required="true"
+                                  For="@(() => passwordModel.OldPassword)"
+                                  InputType="@(_showOldPassword ? InputType.Text : InputType.Password)"
+                                  Adornment="Adornment.End"
+                                  AdornmentIcon="@(_showOldPassword ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                                  OnAdornmentClick="@ToggleOldPasswordVisibility" />
+                </MudItem>
+
+                <MudItem xs="12" sm="4">
+                    <MudTextField @bind-Value="passwordModel.Password"
+                                  Label="Password"
+                                  Variant="Variant.Outlined"
+                                  Required="true"
+                                  Disabled="string.IsNullOrEmpty(passwordModel.OldPassword)"
+                                  For="@(() => passwordModel.Password)"
+                                  InputType="@(_showPassword ? InputType.Text : InputType.Password)"
+                                  Adornment="Adornment.End"
+                                  AdornmentIcon="@(_showPassword ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                                  OnAdornmentClick="@TogglePasswordVisibility" />
+                </MudItem>
+
+                <MudItem xs="12" sm="4">
+                    <MudTextField @bind-Value="passwordModel.ConfirmPassword"
+                                  Label="Confirm Password"
+                                  Variant="Variant.Outlined"
+                                  Required="true"
+                                  Disabled="string.IsNullOrEmpty(passwordModel.Password)"
+                                  For="@(() => passwordModel.ConfirmPassword)"
+                                  InputType="@(_showConfirmPassword ? InputType.Text : InputType.Password)"
+                                  Adornment="Adornment.End"
+                                  AdornmentIcon="@(_showConfirmPassword ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                                  OnAdornmentClick="@ToggleConfirmPasswordVisibility" />
+                </MudItem>
+
+            </MudGrid>
+
+            <MudStack Class="mt-4" Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                <MudButton Color="Color.Success"
+                           Variant="Variant.Filled"
+                           Disabled="string.IsNullOrEmpty(passwordModel.ConfirmPassword) || !passwordModel.Password.Equals(passwordModel.ConfirmPassword)"
+                           OnClick="OnValidSubmitChangePassword">
+                    Update Password
+                </MudButton>
+            </MudStack>
+        </MudForm>
+    </MudPaper>
+</MudContainer>
+</div>
+
+<form id="reloginForm" method="post" action="/re-login" style="display: none;">
+    <input name="userId" value="@_userContext.CurrentUser.UserId" />
+</form>
+
+@code {
+    private MudForm form = new();
+    private MudForm changePasswordForm = new();
+    private MudForm formChangePass = new();
+
+    private SaveUserManagementModel originalModel = new SaveUserManagementModel
+        {
+            BirthDate = DateTime.UtcNow.AddYears(-10)
+        };
+
+    private SaveUserManagementModel model = new SaveUserManagementModel
+        {
+            BirthDate = DateTime.UtcNow.AddYears(-10)
+        };
+
+    private bool isValidated = false;
+    private bool isChangePasswordValidated = false;
+
+    public SaveChangePasswordUserManagementModel passwordModel = new();
+
+    private bool _showOldPassword = false;
+    private bool _showPassword = false;
+    private bool _showConfirmPassword = false;
+
+    private void ToggleOldPasswordVisibility() => _showOldPassword = !_showOldPassword;
+    private void TogglePasswordVisibility() => _showPassword = !_showPassword;
+    private void ToggleConfirmPasswordVisibility() => _showConfirmPassword = !_showConfirmPassword;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        model = await _Service.Find(_userContext.CurrentUser.UserId) ?? new SaveUserManagementModel();
+        originalModel = await _Service.Find(_userContext.CurrentUser.UserId) ?? new SaveUserManagementModel();
+
+        StateHasChanged();
+    }
+
+    private async Task OnValidSubmit()
+    {
+        await form.Validate();
+
+        if (form.IsValid)
+        {
+            var (success, errorMessage) = await _Service.Save(model);
+
+            if (success){
+                await _LocalStorage.SetItemAsync("LoggedInUser",
+
+                new CurrentUserModel 
+                    { 
+                        UserId = model.UserId,
+                        PersonId = model.PersonId,
+                        Name = string.Join(" ", new[]
+                            {
+                            model.FirstName,
+                            string.IsNullOrWhiteSpace(model.MiddleName) ? null : model.MiddleName.Substring(0, 1)+". ",
+                            model.LastName,
+                            model.Suffix
+                            }
+                            .Where(s => !string.IsNullOrWhiteSpace(s))),
+                        Role    = _userContext.CurrentUser.Role,
+                        ExpiresIn = _userContext.CurrentUser.ExpiresIn
+
+                    }
+                );
+
+                Snackbar.Add("Profile updated successfully.", Severity.Success);
+                await JS.InvokeVoidAsync("submiteReloginForm");
+            }
+            else
+                Snackbar.Add(errorMessage, Severity.Error);
+        }
+        else
+        {
+            Snackbar.Add("Please correct the highlighted fields.", Severity.Error);
+        }
+    }
+
+    private async Task OnValidSubmitChangePassword()
+    {
+        await changePasswordForm.Validate();
+
+        if (changePasswordForm.IsValid)
+        {
+            passwordModel.UserId = _userContext.CurrentUser.UserId;
+
+            var success = await _Service.ChangePassword(passwordModel);
+
+            if (success)
+            {
+                Snackbar.Add("Password updated successfully.", Severity.Success);
+                passwordModel = new SaveChangePasswordUserManagementModel();
+                await changePasswordForm.ResetAsync();
+            }
+            else
+                Snackbar.Add("Password is incorrect!", Severity.Error);
+        }
+        else
+        {
+            Snackbar.Add("Please correct the highlighted fields.", Severity.Error);
+        }
+    }
+}

@@ -1,0 +1,36 @@
+﻿@using BTECH_APP.Models.Guest
+<MudItem xs="12" md="8" Style="box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);; padding: 25px">
+    <MudText Typo="Typo.h5" GutterBottom="true" Style="font-weight:900">Programs Offered</MudText>
+
+    <MudGrid Spacing="2" Style="overflow-y: auto; height: 626px;">
+
+        @foreach(var item in Institutes)
+        {
+            <MudItem xs="12" sm="6">
+                <MudCard Elevation="4" Style="padding:20px; border: 1px solid #ccc; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); background-color: rgb(235 234 238 / 25%)">
+                    <MudCardHeader Style="padding: 0px 0px 8px 0px; border-bottom: 1px solid rgb(200 199 204)">
+                        <MudImage Src="@item.FilePath"
+                                  Alt="Uploaded image"
+                                  Style="width:50px; height:50px; object-fit:cover; border-radius:50%;margin-right:15px"
+                                  Class="shadow" /> <MudText Typo="Typo.subtitle1" Style="font-weight: 900"> @item.Name</MudText>
+                    </MudCardHeader>
+                    <MudCardContent Style="overflow-y: auto; padding: 15px 0px 10px 0px; height: 120px;">
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+
+                            @foreach(var item2 in item.Programs)
+                            {
+                                <MudText Style="font-size: 14px">@item2</MudText>
+                            }
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        }
+
+    </MudGrid>
+</MudItem>
+
+@code{
+    [Parameter]
+    public List<InstituteGuestModel> Institutes {get;set;} = new();
+}

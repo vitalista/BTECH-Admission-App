@@ -1,0 +1,130 @@
+﻿@using System.ComponentModel.DataAnnotations
+@inject MudBlazor.ISnackbar Snackbar
+@inject NavigationManager Navigation
+@using BTECH_APP.Models.Admin.Applicant
+@using BTECH_APP.Services.Admin.Interfaces
+@inject IApplicantService _Service
+@inject IAcademicYearService _ServiceAcademicYear
+@inject BTECHDbContext _dbContext
+@using Helpers
+@using static BTECH_APP.Enums
+
+<MudDialog Style="width: 100%; max-width: 500px;padding-bottom:10px">
+    <DialogContent>
+        <MudForm >
+                <MudSelect T="string"
+                           FitContent="true"
+                           Label="Academic Year"
+                           Variant="Variant.Outlined"
+                           @bind-SelectedValues="academicYearFilters"
+                           MultiSelection="true"
+                              ShrinkLabel
+                           Dense="true">
+                    @foreach (var item in academicYearFilters)
+                    {
+                        <MudSelectItem Value="@item">AY @item</MudSelectItem>
+                    }
+                </MudSelect>
+
+                <MudSelect T="SemesterTypes"
+                       Label="Semeter Type"
+                       FitContent="true"
+                       Variant="Variant.Outlined"
+                       @bind-SelectedValues="semesterTypeFilters"
+                       MultiSelection="true"
+                          ShrinkLabel
+                        ToStringFunc="@(x => GetDisplayName(x))"
+                        Dense="true">
+                 <MudSelectItem Value="@SemesterTypes.FirstSemester">@SemesterTypes.FirstSemester.GetDisplayName()</MudSelectItem>
+                    <MudSelectItem Value="@SemesterTypes.SecondSemester">@SemesterTypes.SecondSemester.GetDisplayName()</MudSelectItem>
+                </MudSelect>
+
+                <MudSelect T="ApplicantTypes"
+                           Label="Applicant Type"
+                           FitContent="true"
+                           Variant="Variant.Outlined"
+                           @bind-SelectedValues="applicantTypesFilters"
+                           MultiSelection="true"
+                           ToStringFunc="@(x => GetDisplayName(x))"
+                              ShrinkLabel
+                           Dense="true">
+                    <MudSelectItem Value="@ApplicantTypes.Freshmen">@ApplicantTypes.Freshmen.GetDisplayName()</MudSelectItem>
+                        <MudSelectItem Value="@ApplicantTypes.Transferee">@ApplicantTypes.Transferee.GetDisplayName()</MudSelectItem>
+                        <MudSelectItem Value="@ApplicantTypes.AlsGraduate">@ApplicantTypes.AlsGraduate.GetDisplayName()</MudSelectItem>
+                    </MudSelect>
+
+                    <MudSelect T="ApplicantStatus"
+                               Label="Applicant Status"
+                               FitContent="true"
+                               Variant="Variant.Outlined"
+                               @bind-SelectedValues="applicantStatusFilters"
+                               MultiSelection="true"
+                              ShrinkLabel
+                        ToStringFunc="@(x => GetDisplayName(x))"
+                               Dense="true">
+                        <MudSelectItem Value="@ApplicantStatus.Submitted">@ApplicantStatus.Submitted.GetDisplayName()</MudSelectItem>
+                        <MudSelectItem Value="@ApplicantStatus.Resubmitted">@ApplicantStatus.Resubmitted.GetDisplayName()</MudSelectItem>
+                        <MudSelectItem Value="@ApplicantStatus.Returned">@ApplicantStatus.Returned.GetDisplayName()</MudSelectItem>
+                        <MudSelectItem Value="@ApplicantStatus.Cancelled">@ApplicantStatus.Cancelled.GetDisplayName()</MudSelectItem>
+                        <MudSelectItem Value="@ApplicantStatus.Endorsed">@ApplicantStatus.Endorsed.GetDisplayName()</MudSelectItem>
+                        <MudSelectItem Value="@ApplicantStatus.ReturnedToVerifier">@ApplicantStatus.ReturnedToVerifier.GetDisplayName()</MudSelectItem>
+                        <MudSelectItem Value="@ApplicantStatus.ForSchedule">@ApplicantStatus.ForSchedule.GetDisplayName()</MudSelectItem>
+                        <MudSelectItem Value="@ApplicantStatus.Scheduled">@ApplicantStatus.Scheduled.GetDisplayName()</MudSelectItem>
+                        <MudSelectItem Value="@ApplicantStatus.Recommending">@ApplicantStatus.Recommending.GetDisplayName()</MudSelectItem>
+                        <MudSelectItem Value="@ApplicantStatus.Rejected">@ApplicantStatus.Rejected.GetDisplayName()</MudSelectItem>
+                        <MudSelectItem Value="@ApplicantStatus.Admitted">@ApplicantStatus.Admitted.GetDisplayName()</MudSelectItem>
+                    </MudSelect>
+
+                    <MudButton Type="Submit" Color="Color.Success" Variant="Variant.Filled" Class="mt-3" OnClick="OnValidSubmit">
+                        Search
+                    </MudButton>
+                    <MudButton Class="mt-2" OnClick="() => CloseModal(false)">Cancel</MudButton>
+            </MudForm>
+        </DialogContent>
+    </MudDialog>
+
+    @code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter]
+    public List<ListApplicantModel> Applicants { get; set; } = new();
+
+    private IEnumerable<string> academicYearFilters = Enumerable.Empty<string>();
+    private IEnumerable<SemesterTypes> semesterTypeFilters = new HashSet<SemesterTypes>();
+    private IEnumerable<ApplicantTypes> applicantTypesFilters = new HashSet<ApplicantTypes>();
+    private IEnumerable<ApplicantStatus> applicantStatusFilters = new HashSet<ApplicantStatus>();
+
+    private MudForm form = new();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        academicYearFilters = await _ServiceAcademicYear.Lookup();
+        StateHasChanged();
+    }
+
+    private string GetDisplayName(Enum enums)
+    {
+        return enums.GetDisplayName();
+    }
+
+    private async Task OnValidSubmit()
+    {
+            
+        Applicants = await _Service.List(academicYearFilters.ToList(), semesterTypeFilters.ToList(),
+                                      applicantTypesFilters.ToList(), applicantStatusFilters.ToList());
+           await CloseModal(true);
+    }
+
+    private async Task CloseModal(bool success)
+    {
+        if (success)
+            MudDialog.Close(DialogResult.Ok(Applicants));
+        else
+        {
+            await form.ResetAsync();
+            await Task.Delay(100);
+            MudDialog.Cancel();
+        }
+    }
+}

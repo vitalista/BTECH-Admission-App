@@ -1,0 +1,31 @@
+﻿@using static BTECH_APP.Enums
+
+<MudDialog Width="2500px">
+    <DialogContent>
+        <MudGrid GutterSize="3" Style="display:flex;justify-content:center; padding-top:20px">
+
+            @if (FileType == FileTypes.Image)
+            {
+                <MudImage Src="@FilePath"
+                          Alt="Uploaded image"
+                          Class="shadow"
+                          Style="max-width: 100%; height: auto;" />
+            }
+            else
+            {
+                <object data="@FilePath" type="application/pdf" width="100%" height="800px">
+                    <p>Your browser does not support PDFs. <a href="pdfs/sample.pdf">Download the PDF</a>.</p>
+                </object>
+
+            }
+
+        </MudGrid>
+    </DialogContent>
+ </MudDialog>
+
+@code{
+    [Parameter]
+    public string FilePath { get; set; } = string.Empty;
+    [Parameter]
+    public FileTypes FileType { get; set ;} = FileTypes.Invalid;
+ }

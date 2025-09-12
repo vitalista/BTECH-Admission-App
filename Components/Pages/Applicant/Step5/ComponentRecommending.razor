@@ -1,0 +1,86 @@
+﻿@using BTECH_APP.Models.Admin.Program
+@using BTECH_APP.Models.Applicant
+@using BTECH_APP
+@using BTECH_APP.Services.Applicant.Interfaces
+@inject IStep5ApplicantService _Service
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<MudGrid Class="mx-auto my-4 p-6" Elevation="0" Style="max-width: 1200px;">
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Elevation="0" Dense="true" Class="mb-2">
+        Your first and second program choices do not meet the required qualifications. Please select from the recommended programs to continue your admission.
+    </MudAlert>
+
+    <MudDivider Class="mb-2" />
+
+    <MudGrid Justify="Justify.Center" AlignItems="AlignItems.Center" Style="min-height: 50vh;">
+        <MudItem xs="12" sm="4" Class="d-flex flex-column align-center">
+
+
+            <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem;">
+                <MudText Style="white-space: nowrap; font-size:20px ;font-weight:bolder">
+                    Recommended Programs:
+                </MudText>
+                <MudRadioGroup T="int"
+                               Value="@programId"
+                               ValueChanged="EventCallback.Factory.Create<int>(this, OnProgramSelected)"
+                               Style="flex-shrink: 0;">
+                    @foreach (var x in programs)
+                    {
+                        <MudRadio T="int" Value="@x.ProgramId" Label="@x.Name" />
+                    }
+                </MudRadioGroup>
+            </div>
+
+            <MudButton Type="Submit"
+                       Color="Color.Success"
+                       Disabled="@(programId == 0)"
+                       Variant="Variant.Filled"
+                       OnClick="OnValidSubmit"
+                       Style="width: 100%;">
+                Submit
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+
+</MudGrid>
+
+
+@code{
+    private MudForm form = new();
+    private bool isValidated = false;
+    private int programId = 0;
+    private List<LookupProgramModel> programs { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        programs = await _Service.SuggestedProgram();
+    }
+
+    private async Task OnValidSubmit()
+    {
+        if (programId != 0 )
+        {
+            var success = await _Service.Save(programId);
+
+            if (success)
+            {
+                Snackbar.Add("Successfully Submitted.", Severity.Success);
+
+                await Task.Delay(2000);
+                Navigation.NavigateTo("/loading", true);
+            }
+            else
+                Snackbar.Add("Something went wrong!", Severity.Error);
+        }
+        else
+            Snackbar.Add("Something went wrong!", Severity.Error);
+
+    }
+
+    private void OnProgramSelected(int value)
+    {
+        programId = value;
+    }
+
+}

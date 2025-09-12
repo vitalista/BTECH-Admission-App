@@ -1,0 +1,54 @@
+﻿@typeparam TItem
+
+<MudTable Items="@FilteredItems" Hover="true" SortLabel="Sort By" Dense="true" Elevation="0" style="margin-top:10px" Bordered="true">
+    <ToolBarContent>
+        @if (!string.IsNullOrWhiteSpace(Title))
+        {
+            <MudText Typo="Typo.h6" Style="font-weight:900">@Title</MudText>
+        }
+        <MudSpacer />
+        @if (EnableSearch)
+        {
+            <MudTextField @bind-Value="SearchString"
+                          Placeholder="Search"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Variant="Variant.Outlined"
+                          Size="Size.Small"
+                          Margin="Margin.Dense"
+                          IconSize="Size.Medium"
+                          Immediate="true"
+                          DebounceInterval="300"
+                          Color="Color.Success" />
+        }
+
+    </ToolBarContent>
+
+    <HeaderContent>
+        @HeaderTemplate
+    </HeaderContent>
+
+    <RowTemplate Context="item">
+        @RowTemplate(item)
+    </RowTemplate>
+
+    <PagerContent>
+        <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+    </PagerContent>
+</MudTable>
+
+@code {
+    [Parameter] public IEnumerable<TItem> Items { get; set; } = new List<TItem>();
+    [Parameter] public RenderFragment HeaderTemplate { get; set; }
+    [Parameter] public RenderFragment<TItem> RowTemplate { get; set; }
+    [Parameter] public string Title { get; set; }
+    [Parameter] public bool EnableSearch { get; set; } = false;
+    [Parameter] public Func<TItem, string, bool> FilterFunc { get; set; }
+
+    private string SearchString = "";
+
+    private IEnumerable<TItem> FilteredItems =>
+        string.IsNullOrWhiteSpace(SearchString) || FilterFunc == null
+            ? Items
+            : Items.Where(item => FilterFunc(item, SearchString));
+}

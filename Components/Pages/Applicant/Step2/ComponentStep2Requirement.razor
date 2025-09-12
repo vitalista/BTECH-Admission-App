@@ -1,0 +1,147 @@
+﻿@using BTECH_APP.Helpers
+@using BTECH_APP.Models
+@using BTECH_APP.Models.Applicant
+@using BTECH_APP.Services.Applicant.Interfaces
+@using MudBlazor
+@inject IStep2ApplicantService _Service
+@inject UserContext _userContext
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
+
+
+<MudGrid Class="mx-auto my-4 p-6" Style="max-width: 1200px;">
+    <MudItem xs="12" class="d-flex">
+        <MudText Typo="Typo.h6">Requirements List</MudText>
+    </MudItem>
+
+    <MudItem xs="12" class="d-flex justify-center">
+        <MudDivider Class="mb-2" />
+    </MudItem>
+
+@if(!string.IsNullOrEmpty(reason))
+    {
+        <MudItem xs="12" class="d-flex justify-center">
+            <MudAlert Severity="Severity.Warning"> @((MarkupString)reason)</MudAlert>
+        </MudItem>
+    }
+
+    <MudItem xs="12" class="d-flex justify-center">
+        <MudTable Items="model" Hover="true" Bordered="true" Striped="true" Style="width:800px">
+            <HeaderContent>
+                <MudTh>Requirement</MudTh>
+                <MudTh>Uploaded File</MudTh>
+                <MudTh Style="width:100px">Action</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>
+                    <div>
+                        <strong>@context.Name</strong>
+                    </div>
+                    <div>
+                        <small>Required: <b>@(context.IsRequired ? "Yes" : "No")</b></small>
+                    </div>
+                </MudTd>
+
+                <MudTd>
+                    @(string.IsNullOrEmpty(context.FileName) ? "Not Uploaded" : context.FileName)
+                </MudTd>
+
+                <MudTd>
+                    <MudFileUpload T="IBrowserFile"
+                                   Accept=".png,.jpg,.jpeg,.pdf"
+                                   MaximumFileCount="1"
+                                   FilesChanged="@(file => OnFileSelected(file, context.RequirementId))">
+                        <ActivatorContent>
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="@(string.IsNullOrEmpty(context.FileName) ? Color.Success : Color.Info)"
+                                       StartIcon="@(string.IsNullOrEmpty(context.FileName) ? Icons.Material.Filled.FileUpload : Icons.Material.Filled.Edit)"
+                                       Style="text-transform:none; margin-top:10px">
+                                @(string.IsNullOrEmpty(context.FileName) ? "Upload" : "Update")
+                            </MudButton>
+                        </ActivatorContent>
+                    </MudFileUpload>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudItem>
+
+    <MudItem xs="12" class="d-flex justify-center mt-4">
+     
+        <MudButton Color="Color.Success"
+                   Variant="Variant.Filled"
+                   Disabled="@(!canSubmit)"
+                   Style="width: 25%; max-width: 300px;"
+                   OnClick="OpenComponentSubmitConfirm">
+            Submit
+        </MudButton>
+    </MudItem>
+</MudGrid>
+
+
+@code{
+    private List<SaveRequirementsApplicantModel> model = new();
+    private string? reason { get; set; }
+    private bool canSubmit = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Requirements();
+    }
+
+    private async Task Requirements(){
+
+        var data = await _Service.List();
+
+        model = data.requirements;
+        reason = data.reason;
+
+        int requiredCount = model.Count(x => x.IsRequired);
+        int requiredUploadedCount = model.Count(x => x.IsRequired && !string.IsNullOrEmpty(x.FileName));
+
+        if (requiredCount == requiredUploadedCount)
+            canSubmit = true;
+
+        StateHasChanged();
+    }
+
+    private async Task OnFileSelected(IBrowserFile file, int requirementId)
+    {
+        if (file is null) return;
+
+        var uploaded = await Helper.UploadFile(file, "Requirements");
+
+        var row = model.FirstOrDefault(r => r.RequirementId == requirementId);
+
+        if (row is not null)
+        {
+            row.FilePath = uploaded.FilePath;
+            row.FileName = uploaded.FileName;
+            row.FileType = uploaded.FileType;
+
+            await _Service.Save(row);
+        }
+
+        await Requirements();
+    }
+
+    private async Task OpenComponentSubmitConfirm()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+
+        var prop = new DialogParameters
+            {
+                {nameof(ComponentStep2Confirm.applicantId), _userContext.CurrentUser.ApplicantId}
+            };
+
+        var dialog = await DialogService.ShowAsync<ComponentStep2Confirm>("Requirements", prop, options);
+        var result = await dialog.Result;
+
+        if (result != null)
+            if (!result.Canceled)
+            {
+                await Task.Delay(2000);
+                Navigation.NavigateTo("/loading", true);
+            }
+    }
+
+}

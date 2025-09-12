@@ -1,0 +1,15 @@
+﻿.cus-primary-bg {
+    background-color: #388E3C
+}
+.cust-text-light {
+    color: white !important;
+}
+
+.cus-navButton-hover-color:hover {
+    background-color: #1B5E20 !important; /* Green background */
+    color: black !important; /* Black text */
+}
+
+.cus-navButton-hover-color:hover .cust-text-light {
+    color: black !important;
+}

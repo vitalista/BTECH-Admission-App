@@ -1,0 +1,68 @@
+﻿@page "/btech-applicant"
+@layout Components.Layout.ApplicantLayout;
+@using BTECH_APP.Components.Pages.Applicant.Step1
+@inject IApplicantService _Service
+@using BTECH_APP.Components.Pages.Applicant.Step2
+@using BTECH_APP.Components.Pages.Applicant.Step3
+@using BTECH_APP.Components.Pages.Applicant.Step4
+@using BTECH_APP.Components.Pages.Applicant.Step5
+@using BTECH_APP.Entities.Applicant
+@using BTECH_APP.Models
+@using BTECH_APP.Models.Auth
+@using BTECH_APP.Services.Applicant.Interfaces
+@using Blazored.LocalStorage
+@using Microsoft.EntityFrameworkCore
+@using MudBlazor
+@using static BTECH_APP.Enums
+@inject UserContext _userContext
+@inject BTECHDbContext _dbContext
+@inject IApplicantService _Service;
+
+@if (isLoading)
+{
+    <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" Class="my-5" />
+}
+else
+{
+    @if (CurrentStatus == ApplicantStatus.Draft)
+    {
+        <ComponentStep1Form @key="1" />
+    }
+    else if (CurrentStatus == ApplicantStatus.ForRequirements || CurrentStatus == ApplicantStatus.Returned)
+    {
+        <ComponentStep2Requirement @key="2" />
+    }
+    else if (CurrentStatus == ApplicantStatus.Submitted 
+            || CurrentStatus == ApplicantStatus.Resubmitted
+            || CurrentStatus == ApplicantStatus.Endorsed
+            || CurrentStatus == ApplicantStatus.ReturnedToVerifier
+            || CurrentStatus == ApplicantStatus.ForSchedule)
+    {
+        <ComponentStep3Review @key="3" />
+    }
+    else if (CurrentStatus == ApplicantStatus.Scheduled)
+    {
+        <ComponentStep4Scheduled @key="4" />
+    }
+    else if (CurrentStatus == ApplicantStatus.Recommending)
+    {
+        <ComponentRecommending @key="5" />
+    }
+    else if (CurrentStatus == ApplicantStatus.Admitted || CurrentStatus == ApplicantStatus.Rejected || CurrentStatus == ApplicantStatus.Cancelled)
+    {
+        <ComponentStatus @key="6" />
+    }
+}
+
+@code {
+    private ApplicantStatus CurrentStatus { get; set; } = ApplicantStatus.Draft;
+
+    private bool hasInitialized = false;
+    private bool isLoading = true;
+
+    protected override void OnInitialized()
+    {
+        CurrentStatus = _userContext.CurrentUser.ApplicantStatus;
+        isLoading = false;
+    }
+}
