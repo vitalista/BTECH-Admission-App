@@ -28,8 +28,18 @@ var dbName = Environment.GetEnvironmentVariable("DB_NAME");
 var dbUser = Environment.GetEnvironmentVariable("DB_USER");
 var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD");
 
+// ✅ 1.1 Log Environment Variables (for Render diagnostics)
+Console.ForegroundColor = ConsoleColor.Yellow;
+Console.WriteLine("🔍 [ENV CHECK] Loading MySQL Environment Variables...");
+Console.WriteLine($"DB_HOST: {(string.IsNullOrWhiteSpace(dbHost) ? "[MISSING]" : dbHost)}");
+Console.WriteLine($"DB_PORT: {(string.IsNullOrWhiteSpace(dbPort) ? "[MISSING]" : dbPort)}");
+Console.WriteLine($"DB_NAME: {(string.IsNullOrWhiteSpace(dbName) ? "[MISSING]" : dbName)}");
+Console.WriteLine($"DB_USER: {(string.IsNullOrWhiteSpace(dbUser) ? "[MISSING]" : dbUser)}");
+Console.WriteLine($"DB_PASSWORD: {(string.IsNullOrWhiteSpace(dbPassword) ? "[MISSING]" : "[LOADED]")}");
+Console.ResetColor();
+
 // ✅ 2. Build the connection string securely
-var connectionString = $"Server={dbHost};Port={dbPort};Database={dbName};Uid={dbUser};Pwd={dbPassword};";
+var connectionString = $"Server={dbHost};Port={dbPort};Database={dbName};Uid={dbUser};Pwd={dbPassword};SslMode=Required;";
 
 // ✅ 3. Register EF Core DbContext
 builder.Services.AddDbContext<BTECHDbContext>(options =>
@@ -140,7 +150,6 @@ app.MapRazorComponents<App>()
 app.MapPost("/", async (IAuthService _Service, [FromForm] string email, [FromForm] string password) =>
 {
     var success = await _Service.LoginAsync(new BTECH_APP.Models.Auth.LoginModel() { Email = email, Password = password });
-
     return success ? Results.Redirect("/loading") : Results.Redirect("/");
 })
 .AllowAnonymous()
