@@ -21,21 +21,26 @@ using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ✅ 1. Load environment variables for MySQL connection
+var dbHost = Environment.GetEnvironmentVariable("DB_HOST");
+var dbPort = Environment.GetEnvironmentVariable("DB_PORT") ?? "3306";
+var dbName = Environment.GetEnvironmentVariable("DB_NAME");
+var dbUser = Environment.GetEnvironmentVariable("DB_USER");
+var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD");
+
+// ✅ 2. Build the connection string securely
+var connectionString = $"Server={dbHost};Port={dbPort};Database={dbName};Uid={dbUser};Pwd={dbPassword};";
+
+// ✅ 3. Register EF Core DbContext
+builder.Services.AddDbContext<BTECHDbContext>(options =>
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-// ✅ Get connection string from environment variable (e.g. from Render.com)
-var connectionString = Environment.GetEnvironmentVariable("DefaultConnection");
-
-// ✅ Optional fallback (for local dev)
-// var connectionString = Environment.GetEnvironmentVariable("databaseconnection") 
-//     ?? builder.Configuration.GetConnectionString("DefaultConnection");
-
-builder.Services.AddDbContext<BTECHDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
-
+// ✅ 4. Register HTTP client for components
 builder.Services.AddScoped(sp =>
 {
     var navigationManager = sp.GetRequiredService<NavigationManager>();
@@ -45,6 +50,7 @@ builder.Services.AddScoped(sp =>
     };
 });
 
+// ✅ 5. Configure Authentication & Authorization
 builder.Services.AddAuthentication("MyCookieAuth")
     .AddCookie("MyCookieAuth", options =>
     {
@@ -55,19 +61,29 @@ builder.Services.AddAuthentication("MyCookieAuth")
 builder.Services.AddAuthorization();
 builder.Services.AddHttpContextAccessor();
 
+// ✅ 6. Add external packages
 builder.Services.AddMudServices();
 builder.Services.AddBlazoredLocalStorage();
 
 builder.Services.AddScoped<UserContext>();
 
-builder.Services.Configure<EmailSettingsModel>(builder.Configuration.GetSection("EmailSettings"));
+// ✅ 7. Configure Email Settings using environment variables
+builder.Services.Configure<EmailSettingsModel>(options =>
+{
+    options.SmtpServer = Environment.GetEnvironmentVariable("EMAIL_SMTP") ?? "smtp.gmail.com";
+    options.Port = int.TryParse(Environment.GetEnvironmentVariable("EMAIL_PORT"), out int port) ? port : 587;
+    options.SenderName = Environment.GetEnvironmentVariable("EMAIL_SENDER_NAME") ?? "BTECH Admission";
+    options.Username = Environment.GetEnvironmentVariable("EMAIL_USER");
+    options.Password = Environment.GetEnvironmentVariable("EMAIL_PASSWORD");
+});
+
 builder.Services.AddTransient<IEmailService, EmailService>();
 
-#region Guest
+#region Guest Services
 builder.Services.AddScoped<IGuestService, GuestService>();
-#endregion Guest
+#endregion
 
-#region Admin
+#region Admin Services
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IAcademicYearService, AcademicYearService>();
 builder.Services.AddScoped<BTECH_APP.Services.Admin.Interfaces.IApplicantService, BTECH_APP.Services.Admin.ApplicantService>();
@@ -76,23 +92,24 @@ builder.Services.AddScoped<IInstituteService, InstituteService>();
 builder.Services.AddScoped<IProgramService, ProgramService>();
 builder.Services.AddScoped<IRequirementService, RequirementService>();
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
-#endregion Admin
+#endregion
 
-#region Applicant
+#region Applicant Services
 builder.Services.AddScoped<BTECH_APP.Services.Applicant.Interfaces.IApplicantService, BTECH_APP.Services.Applicant.ApplicantService>();
 builder.Services.AddScoped<IStep1ApplicantService, Step1ApplicantService>();
 builder.Services.AddScoped<IStep2ApplicantService, Step2ApplicantService>();
 builder.Services.AddScoped<IStep5ApplicantService, Step5ApplicantService>();
-#endregion Applicant
+#endregion
 
-#region StaticData
+#region Static Data Services
 builder.Services.AddScoped<IStaticDataService, StaticDataService>();
-#endregion StaticData
+#endregion
 
 builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
+// ✅ 8. Seed or load initial data
 using (var scope = app.Services.CreateScope())
 {
     var academicYear = scope.ServiceProvider.GetService<IAcademicYearService>();
@@ -102,6 +119,7 @@ using (var scope = app.Services.CreateScope())
     await runStaticData.RunStaticData();
 }
 
+// ✅ 9. Middleware
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
@@ -109,25 +127,21 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.UseStaticFiles();
 app.UseAntiforgery();
 
+// ✅ 10. Map Razor Components
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+// ✅ 11. Custom POST endpoints
 app.MapPost("/", async (IAuthService _Service, [FromForm] string email, [FromForm] string password) =>
 {
-    var success = await _Service.LoginAsync(
-        new BTECH_APP.Models.Auth.LoginModel() { Email = email, Password = password });
+    var success = await _Service.LoginAsync(new BTECH_APP.Models.Auth.LoginModel() { Email = email, Password = password });
 
-    if (success)
-        return Results.Redirect("/loading");
-
-    return Results.Redirect("/");
+    return success ? Results.Redirect("/loading") : Results.Redirect("/");
 })
 .AllowAnonymous()
 .DisableAntiforgery();
@@ -135,7 +149,6 @@ app.MapPost("/", async (IAuthService _Service, [FromForm] string email, [FromFor
 app.MapPost("/logout-page", async (IAuthService _Service) =>
 {
     await _Service.LogoutAsync();
-
     return Results.Redirect("/");
 })
 .AllowAnonymous()
@@ -144,11 +157,7 @@ app.MapPost("/logout-page", async (IAuthService _Service) =>
 app.MapPost("/re-login", async (IAuthService _Service, [FromForm] int userId) =>
 {
     var success = await _Service.Relogin(userId);
-
-    if (success)
-        return Results.Redirect("/profile");
-
-    return Results.Redirect("/");
+    return success ? Results.Redirect("/profile") : Results.Redirect("/");
 })
 .AllowAnonymous()
 .DisableAntiforgery();
