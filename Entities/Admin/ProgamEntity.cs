@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BTECH_APP.Entities.Admin
 {
-    [Table("Programs")]
+    [Table("programs")]
     public class ProgamEntity : BaseColumn
     {
         [Key]

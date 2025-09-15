@@ -5,7 +5,7 @@ using static BTECH_APP.Enums;
 
 namespace BTECH_APP.Entities.Admin
 {
-    [Table("Institutes")]
+    [Table("institutes")]
     public class InstituteEntity : BaseColumn
     {
         [Key]

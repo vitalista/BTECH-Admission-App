@@ -6,7 +6,7 @@ using static BTECH_APP.Enums;
 namespace BTECH_APP.Entities.Auth
 {
 
-    [Table("Persons")]
+    [Table("persons")]
     public class UserInformationEntity : BaseColumn
     {
         [Key]

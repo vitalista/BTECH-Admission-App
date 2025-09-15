@@ -7,7 +7,7 @@ namespace BTECH_APP.Entities.Auth
 {
 
 
-    [Table("Users")]
+    [Table("users")]
     public class UserEntity : BaseColumn
     {
         [Key]

@@ -4,7 +4,7 @@ using static BTECH_APP.Enums;
 
 namespace BTECH_APP.Entities.Applicant
 {
-    [Table("Applicants_Requirements")]
+    [Table("applicants_Requirements")]
     public class ApplicantRequirementEntity
     {
         [Key]

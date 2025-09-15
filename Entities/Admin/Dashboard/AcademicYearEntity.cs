@@ -5,7 +5,7 @@ using static BTECH_APP.Enums;
 namespace BTECH_APP.Entities.Admin.Dashboard
 {
 
-    [Table("Academic_Years")]
+    [Table("academic_Years")]
     public class AcademicYearEntity
     {
         [Key]
