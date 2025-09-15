@@ -4,7 +4,7 @@ using static BTECH_APP.Enums;
 
 namespace BTECH_APP.Entities.Applicant
 {
-    [Table("applicants_Status_Remarks")]
+    [Table("applicants_status_remarks")]
     public class StatusRemarksEntity
     {
         [Key]

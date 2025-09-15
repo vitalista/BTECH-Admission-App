@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BTECH_APP.Entities.StaticData
 {
-    [Table("Municipalities")]
+    [Table("municipalities")]
     public class MunicipalityEntity
     {
         [Key]
